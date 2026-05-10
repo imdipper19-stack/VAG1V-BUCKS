@@ -1,0 +1,2227 @@
+
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bag1V-Bucks</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #0a0a0f;
+      --bg-warm: #0d0d14;
+      --surface: rgba(255, 255, 255, 0.03);
+      --surface-elevated: rgba(255, 255, 255, 0.06);
+      --surface-glass: rgba(255, 255, 255, 0.02);
+      --accent: #8b5cf6;
+      --accent-light: #a78bfa;
+      --accent-soft: rgba(139, 92, 246, 0.12);
+      --accent-glow: rgba(139, 92, 246, 0.5);
+      --success: #22c55e;
+      --success-soft: rgba(34, 197, 94, 0.12);
+      --danger: #ef4444;
+      --danger-soft: rgba(239, 68, 68, 0.12);
+      --text: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --text-subtle: #71717a;
+      --border: rgba(255, 255, 255, 0.06);
+      --border-hover: rgba(255, 255, 255, 0.12);
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Roboto Mono', ui-monospace, monospace;
+      --radius: 24px;
+      --radius-sm: 14px;
+      --radius-xs: 10px;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ==================== BACKGROUND GRID ==================== */
+    .grid-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .grid-pattern {
+      position: absolute;
+      inset: -50%;
+      background-image: 
+        linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      animation: gridMove 60s linear infinite;
+      transform-origin: center;
+    }
+
+    @keyframes gridMove {
+      0% { transform: perspective(500px) rotateX(60deg) translateY(0); }
+      100% { transform: perspective(500px) rotateX(60deg) translateY(60px); }
+    }
+
+    .grid-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 800px;
+      height: 800px;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, transparent 60%);
+      animation: glowPulse 8s ease-in-out infinite;
+    }
+
+    @keyframes glowPulse {
+      0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+      50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+    }
+
+    .grid-overlay {
+      position: absolute;
+      inset: 0;
+      background: 
+        radial-gradient(ellipse 80% 50% at 50% 0%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 40% at 20% 100%, rgba(34, 197, 94, 0.05) 0%, transparent 50%);
+    }
+
+    /* Floating particles */
+    .particles {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: var(--accent);
+      border-radius: 50%;
+      opacity: 0.3;
+      animation: particleFloat 20s linear infinite;
+    }
+
+    .particle:nth-child(1) { left: 10%; animation-delay: 0s; animation-duration: 25s; }
+    .particle:nth-child(2) { left: 20%; animation-delay: -5s; animation-duration: 20s; }
+    .particle:nth-child(3) { left: 30%; animation-delay: -10s; animation-duration: 28s; }
+    .particle:nth-child(4) { left: 40%; animation-delay: -3s; animation-duration: 22s; }
+    .particle:nth-child(5) { left: 50%; animation-delay: -8s; animation-duration: 26s; }
+    .particle:nth-child(6) { left: 60%; animation-delay: -12s; animation-duration: 24s; }
+    .particle:nth-child(7) { left: 70%; animation-delay: -2s; animation-duration: 21s; }
+    .particle:nth-child(8) { left: 80%; animation-delay: -7s; animation-duration: 27s; }
+    .particle:nth-child(9) { left: 90%; animation-delay: -15s; animation-duration: 23s; }
+
+    @keyframes particleFloat {
+      0% { transform: translateY(100vh) scale(0); opacity: 0; }
+      10% { opacity: 0.3; }
+      90% { opacity: 0.3; }
+      100% { transform: translateY(-100vh) scale(1); opacity: 0; }
+    }
+
+    /* ==================== LOGO ==================== */
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-3d {
+      width: 48px;
+      height: 48px;
+      position: relative;
+      transform-style: preserve-3d;
+      animation: logoFloat 4s ease-in-out infinite, logoRotate 20s linear infinite;
+    }
+
+    @keyframes logoFloat {
+      0%, 100% { transform: translateY(0) rotateY(0deg); }
+      50% { transform: translateY(-5px) rotateY(5deg); }
+    }
+
+    @keyframes logoRotate {
+      0% { transform: rotateY(0deg); }
+      100% { transform: rotateY(360deg); }
+    }
+
+    .logo-hex {
+      position: absolute;
+      inset: 0;
+    }
+
+    .logo-hex svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 0 15px var(--accent-glow));
+    }
+
+    .logo-v {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-sans);
+      font-weight: 800;
+      font-size: 22px;
+      color: white;
+      text-shadow: 0 0 20px var(--accent), 0 2px 4px rgba(0,0,0,0.5);
+      animation: vGlow 2s ease-in-out infinite;
+    }
+
+    @keyframes vGlow {
+      0%, 100% { text-shadow: 0 0 20px var(--accent), 0 2px 4px rgba(0,0,0,0.5); }
+      50% { text-shadow: 0 0 30px var(--accent), 0 0 50px var(--accent-light), 0 2px 4px rgba(0,0,0,0.5); }
+    }
+
+    .logo-ring {
+      position: absolute;
+      inset: -4px;
+      border: 2px solid transparent;
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: ringSpin 3s linear infinite;
+      opacity: 0.5;
+    }
+
+    .logo-ring:nth-child(2) {
+      inset: -8px;
+      border-top-color: var(--accent-light);
+      animation-duration: 4s;
+      animation-direction: reverse;
+    }
+
+    @keyframes ringSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    .logo-stars {
+      position: absolute;
+      inset: -10px;
+    }
+
+    .star {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: white;
+      border-radius: 50%;
+      animation: starTwinkle 2s ease-in-out infinite;
+    }
+
+    .star:nth-child(1) { top: 0; left: 50%; animation-delay: 0s; }
+    .star:nth-child(2) { top: 50%; right: 0; animation-delay: 0.5s; }
+    .star:nth-child(3) { bottom: 0; left: 50%; animation-delay: 1s; }
+    .star:nth-child(4) { top: 50%; left: 0; animation-delay: 1.5s; }
+
+    @keyframes starTwinkle {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.5); }
+    }
+
+    /* ==================== PAGE LAYOUT ==================== */
+    .page-wrapper {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+    }
+
+    .buyer-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      max-width: 440px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0;
+      animation: slideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .logo-text {
+      background: linear-gradient(135deg, #f4f4f5 0%, #a1a1aa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .timer {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--danger);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      background: var(--danger-soft);
+      border-radius: 24px;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      backdrop-filter: blur(10px);
+    }
+
+    .timer-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--danger);
+      border-radius: 50%;
+      animation: pulse 1.5s ease-in-out infinite;
+      box-shadow: 0 0 10px var(--danger);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 40px 0;
+    }
+
+    /* Order Card */
+    .order-card {
+      background: var(--surface-glass);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 44px 36px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      animation: cardEntrance 1s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+    }
+
+    @keyframes cardEntrance {
+      from { opacity: 0; transform: translateY(40px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .order-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.5), transparent);
+    }
+
+    .order-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    /* Hero Logo */
+    .hero-logo {
+      width: 140px;
+      height: 140px;
+      margin: 0 auto 32px;
+      position: relative;
+    }
+
+    .hero-logo-glow {
+      position: absolute;
+      inset: -20px;
+      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+      animation: heroGlow 3s ease-in-out infinite;
+      filter: blur(20px);
+    }
+
+    @keyframes heroGlow {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(1.1); }
+    }
+
+    .hero-logo-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .hero-hex {
+      position: absolute;
+      inset: 0;
+      animation: hexRotate 30s linear infinite;
+    }
+
+    @keyframes hexRotate {
+      to { transform: rotate(360deg); }
+    }
+
+    .hero-hex svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 0 20px var(--accent-glow));
+    }
+
+    .hero-v {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-sans);
+      font-weight: 900;
+      font-size: 64px;
+      color: white;
+      text-shadow: 
+        0 0 40px var(--accent),
+        0 0 80px var(--accent-glow),
+        0 4px 8px rgba(0,0,0,0.5);
+      animation: heroVGlow 2s ease-in-out infinite;
+    }
+
+    @keyframes heroVGlow {
+      0%, 100% { 
+        text-shadow: 
+          0 0 40px var(--accent),
+          0 0 80px var(--accent-glow),
+          0 4px 8px rgba(0,0,0,0.5);
+      }
+      50% { 
+        text-shadow: 
+          0 0 60px var(--accent),
+          0 0 120px var(--accent-light),
+          0 4px 8px rgba(0,0,0,0.5);
+      }
+    }
+
+    .hero-inner-ring {
+      position: absolute;
+      inset: 15px;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 50%;
+      animation: innerRingPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes innerRingPulse {
+      0%, 100% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.05); opacity: 1; }
+    }
+
+    .hero-outer-ring {
+      position: absolute;
+      inset: -10px;
+      border: 2px dashed rgba(139, 92, 246, 0.2);
+      border-radius: 50%;
+      animation: outerRingSpin 20s linear infinite;
+    }
+
+    @keyframes outerRingSpin {
+      to { transform: rotate(-360deg); }
+    }
+
+    .hero-dots {
+      position: absolute;
+      inset: -30px;
+    }
+
+    .hero-dot {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: var(--accent-light);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--accent);
+    }
+
+    .hero-dot:nth-child(1) { top: 0; left: 50%; animation: dotFloat 3s ease-in-out infinite; }
+    .hero-dot:nth-child(2) { top: 25%; right: 0; animation: dotFloat 3s ease-in-out infinite 0.5s; }
+    .hero-dot:nth-child(3) { bottom: 25%; right: 0; animation: dotFloat 3s ease-in-out infinite 1s; }
+    .hero-dot:nth-child(4) { bottom: 0; left: 50%; animation: dotFloat 3s ease-in-out infinite 1.5s; }
+    .hero-dot:nth-child(5) { bottom: 25%; left: 0; animation: dotFloat 3s ease-in-out infinite 2s; }
+    .hero-dot:nth-child(6) { top: 25%; left: 0; animation: dotFloat 3s ease-in-out infinite 2.5s; }
+
+    @keyframes dotFloat {
+      0%, 100% { transform: translateY(0) scale(1); opacity: 0.5; }
+      50% { transform: translateY(-5px) scale(1.5); opacity: 1; }
+    }
+
+    .vbucks-amount {
+      font-family: var(--font-mono);
+      font-size: 60px;
+      font-weight: 600;
+      letter-spacing: -4px;
+      background: linear-gradient(135deg, #f4f4f5 0%, #d4d4d8 50%, #a1a1aa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 6px;
+      animation: amountShimmer 4s ease-in-out infinite;
+    }
+
+    @keyframes amountShimmer {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.2); }
+    }
+
+    .vbucks-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      margin-bottom: 32px;
+    }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      margin-bottom: 28px;
+      position: relative;
+    }
+
+    .divider::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      border-radius: 2px;
+    }
+
+    .meta-info {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+
+    .meta-label {
+      opacity: 0.6;
+    }
+
+    .meta-value {
+      color: var(--text-muted);
+    }
+
+    .cta-button {
+      width: 100%;
+      padding: 20px 32px;
+      background: linear-gradient(135deg, var(--accent) 0%, #7c3aed 50%, #6d28d9 100%);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      margin-top: 36px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 
+        0 4px 20px var(--accent-glow),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+
+    .cta-button::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 50%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .cta-button::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      animation: buttonShine 3s ease-in-out infinite;
+    }
+
+    @keyframes buttonShine {
+      0%, 100% { left: -100%; }
+      50% { left: 100%; }
+    }
+
+    .cta-button:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 
+        0 8px 40px var(--accent-glow),
+        0 0 60px rgba(139, 92, 246, 0.3),
+        inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+
+    .cta-button:hover::before {
+      opacity: 1;
+    }
+
+    .cta-button:active {
+      transform: translateY(-1px) scale(1.01);
+    }
+
+    /* ==================== AUTH PAGE ==================== */
+    .auth-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      visibility: hidden;
+      position: absolute;
+      inset: 0;
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .auth-page.active {
+      opacity: 1;
+      visibility: visible;
+      position: relative;
+    }
+
+    .auth-card {
+      background: var(--surface-glass);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 52px 44px;
+      text-align: center;
+      max-width: 460px;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+      animation: authEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes authEntrance {
+      from { opacity: 0; transform: scale(0.9) translateY(30px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .auth-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+
+    .auth-title {
+      font-size: 11px;
+      color: var(--text-subtle);
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      margin-bottom: 36px;
+    }
+
+    .code-display {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+
+    .code-char {
+      width: 58px;
+      height: 72px;
+      background: linear-gradient(180deg, var(--surface-elevated) 0%, var(--surface) 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xs);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 32px;
+      font-weight: 600;
+      animation: charPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+      text-shadow: 0 0 30px var(--accent-glow);
+      box-shadow: 
+        0 4px 15px rgba(0,0,0,0.3),
+        inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+
+    .code-char:nth-child(1) { animation-delay: 0.1s; }
+    .code-char:nth-child(2) { animation-delay: 0.15s; }
+    .code-char:nth-child(3) { animation-delay: 0.2s; }
+    .code-char:nth-child(4) { animation-delay: 0.25s; }
+    .code-char:nth-child(5) { animation-delay: 0.3s; }
+    .code-char:nth-child(6) { animation-delay: 0.35s; }
+
+    @keyframes charPop {
+      from { opacity: 0; transform: scale(0.5) rotateX(60deg); }
+      to { opacity: 1; transform: scale(1) rotateX(0); }
+    }
+
+    .copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 28px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .copy-btn:hover {
+      background: var(--surface-elevated);
+      border-color: var(--accent);
+      color: var(--text);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px var(--accent-soft);
+    }
+
+    .copy-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .auth-instruction {
+      margin-top: 40px;
+      padding-top: 36px;
+      border-top: 1px solid var(--border);
+    }
+
+    .auth-instruction p {
+      font-size: 14px;
+      color: var(--text-subtle);
+      margin-bottom: 16px;
+    }
+
+    .auth-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      padding: 12px 20px;
+      background: var(--accent-soft);
+      border-radius: var(--radius-xs);
+      display: inline-block;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(139, 92, 246, 0.2);
+    }
+
+    .auth-link:hover {
+      background: rgba(139, 92, 246, 0.2);
+      border-color: var(--accent);
+      box-shadow: 0 0 20px var(--accent-soft);
+    }
+
+    .waiting-indicator {
+      margin-top: 52px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .spinner-container {
+      width: 56px;
+      height: 56px;
+      position: relative;
+    }
+
+    .spinner-ring {
+      position: absolute;
+      inset: 0;
+      border: 2px solid transparent;
+      border-radius: 50%;
+    }
+
+    .spinner-ring:nth-child(1) {
+      border-top-color: var(--accent);
+      animation: spin 1s linear infinite;
+    }
+
+    .spinner-ring:nth-child(2) {
+      inset: 8px;
+      border-top-color: rgba(139, 92, 246, 0.6);
+      animation: spin 1.5s linear infinite reverse;
+    }
+
+    .spinner-ring:nth-child(3) {
+      inset: 16px;
+      border-top-color: rgba(139, 92, 246, 0.3);
+      animation: spin 2s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .waiting-text {
+      font-size: 14px;
+      color: var(--text-muted);
+      animation: textPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes textPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* ==================== TIMELINE ==================== */
+    .timeline-page {
+      min-height: 100vh;
+      padding: 24px 20px;
+      max-width: 540px;
+      margin: 0 auto;
+    }
+
+    .timeline-page.active {
+      display: block;
+    }
+
+    .timeline-header {
+      text-align: center;
+      margin-bottom: 52px;
+      animation: slideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .timeline-title {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #f4f4f5 0%, #a1a1aa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .timeline-subtitle {
+      font-size: 15px;
+      color: var(--text-subtle);
+    }
+
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 15px;
+      top: 16px;
+      bottom: 16px;
+      width: 2px;
+      background: linear-gradient(180deg, var(--accent), var(--success), var(--accent));
+      border-radius: 1px;
+      opacity: 0.4;
+    }
+
+    .timeline-item {
+      display: flex;
+      gap: 24px;
+      padding: 22px 0;
+      opacity: 0;
+      transform: translateX(-30px);
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .timeline-item.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .timeline-item.completed {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .timeline-marker {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+      background: var(--bg);
+    }
+
+    .timeline-marker.waiting {
+      background: var(--surface);
+      border: 2px solid var(--border);
+    }
+
+    .timeline-marker.active {
+      background: linear-gradient(135deg, var(--accent) 0%, #7c3aed 100%);
+      border: none;
+      box-shadow: 
+        0 0 40px var(--accent-glow),
+        0 0 80px rgba(139, 92, 246, 0.3);
+    }
+
+    .timeline-marker.active::after {
+      content: '';
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      animation: ringPulse 1.5s ease-out infinite;
+    }
+
+    @keyframes ringPulse {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(1.8); opacity: 0; }
+    }
+
+    .timeline-marker.completed {
+      background: linear-gradient(135deg, var(--success) 0%, #16a34a 100%);
+      border: none;
+      box-shadow: 0 4px 25px rgba(34, 197, 94, 0.4);
+    }
+
+    .timeline-marker.completed svg {
+      width: 16px;
+      height: 16px;
+      color: white;
+    }
+
+    .timeline-content {
+      flex: 1;
+      padding-top: 4px;
+    }
+
+    .timeline-step-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .timeline-step-title {
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .timeline-item.waiting .timeline-step-title { color: var(--text-subtle); }
+    .timeline-item.active .timeline-step-title { color: var(--text); }
+    .timeline-item.completed .timeline-step-title { color: var(--text); }
+
+    .timeline-time {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--success);
+      padding: 5px 12px;
+      background: var(--success-soft);
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    .timeline-logs {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-subtle);
+      margin-top: 14px;
+      padding: 14px 18px;
+      background: var(--surface);
+      border-radius: var(--radius-xs);
+      border-left: 3px solid var(--accent);
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .timeline-item.completed .timeline-logs {
+      max-height: 120px;
+      opacity: 1;
+    }
+
+    .timeline-log-line {
+      padding: 4px 0;
+      display: flex;
+      gap: 10px;
+      animation: logSlide 0.4s ease backwards;
+    }
+
+    .timeline-log-line:nth-child(1) { animation-delay: 0.1s; }
+    .timeline-log-line:nth-child(2) { animation-delay: 0.2s; }
+
+    @keyframes logSlide {
+      from { opacity: 0; transform: translateX(-15px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .timeline-log-line .tag { color: var(--accent); }
+    .timeline-log-line .success { color: var(--success); }
+
+    /* Success Banner */
+    .success-banner {
+      background: linear-gradient(135deg, var(--success-soft) 0%, rgba(22, 163, 74, 0.08) 100%);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: var(--radius);
+      padding: 40px;
+      text-align: center;
+      margin-top: 48px;
+      display: none;
+      position: relative;
+      overflow: hidden;
+      animation: successPop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes successPop {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .success-banner.visible { display: block; }
+
+    .success-banner::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--success), transparent);
+    }
+
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, var(--success) 0%, #16a34a 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      box-shadow: 
+        0 8px 40px rgba(34, 197, 94, 0.5),
+        0 0 80px rgba(34, 197, 94, 0.2);
+      animation: successGlow 2s ease-in-out infinite;
+    }
+
+    @keyframes successGlow {
+      0%, 100% { box-shadow: 0 8px 40px rgba(34, 197, 94, 0.5), 0 0 80px rgba(34, 197, 94, 0.2); }
+      50% { box-shadow: 0 8px 50px rgba(34, 197, 94, 0.7), 0 0 100px rgba(34, 197, 94, 0.3); }
+    }
+
+    .success-icon svg {
+      width: 40px;
+      height: 40px;
+      color: white;
+      animation: checkBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
+    }
+
+    @keyframes checkBounce {
+      from { transform: scale(0) rotate(-10deg); }
+      to { transform: scale(1) rotate(0); }
+    }
+
+    .success-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .success-text {
+      font-size: 15px;
+      color: var(--text-muted);
+    }
+
+    /* ==================== ADMIN DASHBOARD ==================== */
+    .admin-page {
+      display: none;
+    }
+
+    .admin-page.active {
+      display: block;
+    }
+
+    .admin-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      min-height: 100vh;
+    }
+
+    .admin-header {
+      background: var(--surface-glass);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .admin-logo {
+      font-weight: 700;
+      font-size: 17px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .admin-logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent) 0%, #a78bfa 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+      box-shadow: 0 4px 15px var(--accent-glow);
+    }
+
+    .admin-content {
+      padding: 36px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Balance Cards */
+    .balance-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-bottom: 36px;
+    }
+
+    .balance-card {
+      background: var(--surface-glass);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+      animation: cardEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    }
+
+    .balance-card:nth-child(1) { animation-delay: 0.1s; }
+    .balance-card:nth-child(2) { animation-delay: 0.2s; }
+    .balance-card:nth-child(3) { animation-delay: 0.3s; }
+
+    .balance-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    }
+
+    .balance-label {
+      font-size: 12px;
+      color: var(--text-subtle);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .balance-amount {
+      font-family: var(--font-mono);
+      font-size: 40px;
+      font-weight: 600;
+    }
+
+    .balance-amount small {
+      font-size: 20px;
+      opacity: 0.5;
+    }
+
+    .balance-usd {
+      font-size: 14px;
+      color: var(--text-subtle);
+      margin-top: 10px;
+      font-family: var(--font-mono);
+    }
+
+    .balance-card.razor .balance-amount { color: var(--success); }
+    .balance-card.paypal .balance-amount { color: var(--accent); }
+
+    .balance-card::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -30%;
+      width: 80%;
+      height: 150%;
+      background: radial-gradient(circle, var(--accent-soft) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* Generator Form */
+    .generator-section {
+      background: var(--surface-glass);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      margin-bottom: 36px;
+      animation: cardEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.4s backwards;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 28px;
+    }
+
+    .generator-form {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+
+    .form-group {
+      flex: 1;
+      min-width: 240px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-subtle);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .form-select {
+      width: 100%;
+      padding: 16px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%23A1A1AA' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 18px center;
+      transition: all 0.3s ease;
+    }
+
+    .form-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-soft);
+    }
+
+    .btn {
+      padding: 16px 28px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, #7c3aed 100%);
+      color: white;
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px var(--accent-glow);
+    }
+
+    .btn svg { width: 18px; height: 18px; }
+
+    /* Generated URL Display */
+    .generated-url {
+      margin-top: 24px;
+      display: none;
+      animation: slideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .generated-url.visible { display: block; }
+
+    .url-box {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      padding: 18px 22px;
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    .url-text {
+      flex: 1;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .btn-copy {
+      padding: 10px 18px;
+      background: var(--surface-elevated);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xs);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+      font-family: var(--font-sans);
+    }
+
+    .btn-copy:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .btn-copy.copied {
+      background: var(--success);
+      border-color: var(--success);
+    }
+
+    .btn-copy svg { width: 14px; height: 14px; }
+
+    /* Orders Table */
+    .orders-section {
+      background: var(--surface-glass);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      animation: cardEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.5s backwards;
+    }
+
+    .orders-header {
+      padding: 28px 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .orders-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .orders-table th,
+    .orders-table td {
+      padding: 20px 32px;
+      text-align: left;
+    }
+
+    .orders-table th {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-subtle);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      background: var(--surface);
+    }
+
+    .orders-table tr {
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .orders-table tbody tr:hover {
+      background: var(--surface);
+    }
+
+    .orders-table tr:last-child { border-bottom: none; }
+
+    .orders-table td { font-size: 14px; }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      animation: badgePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes badgePop {
+      from { transform: scale(0.8); }
+      to { transform: scale(1); }
+    }
+
+    .status-badge.completed { background: var(--success-soft); color: var(--success); }
+    .status-badge.failed { background: var(--danger-soft); color: var(--danger); }
+    .status-badge.processing { background: var(--accent-soft); color: var(--accent); }
+    .status-badge.pending { background: rgba(234, 179, 8, 0.12); color: #eab308; }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .order-id {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text-subtle);
+    }
+
+    .order-package {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .package-icon {
+      width: 30px;
+      height: 30px;
+      background: linear-gradient(135deg, var(--accent-soft) 0%, rgba(139, 92, 246, 0.08) 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .order-price {
+      font-family: var(--font-mono);
+      font-weight: 500;
+    }
+
+    .order-time {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text-subtle);
+    }
+
+    /* Drawer */
+    .drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.4s ease;
+      z-index: 100;
+    }
+
+    .drawer-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 560px;
+      max-width: 100%;
+      height: 100%;
+      background: var(--bg);
+      border-left: 1px solid var(--border);
+      transform: translateX(100%);
+      transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 101;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .drawer.active { transform: translateX(0); }
+
+    .drawer-header {
+      padding: 28px 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--surface-glass);
+      backdrop-filter: blur(40px);
+    }
+
+    .drawer-title {
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .drawer-close {
+      width: 40px;
+      height: 40px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xs);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .drawer-close:hover {
+      background: var(--danger-soft);
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .drawer-close svg { width: 18px; height: 18px; }
+
+    .drawer-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px;
+    }
+
+    .drawer-section {
+      margin-bottom: 32px;
+    }
+
+    .drawer-section-title {
+      font-size: 11px;
+      color: var(--text-subtle);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+    }
+
+    .json-block {
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      padding: 22px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.8;
+      overflow-x: auto;
+      white-space: pre;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .json-key { color: var(--accent); }
+    .json-string { color: var(--success); }
+    .json-number { color: #f59e0b; }
+    .json-boolean { color: #a855f7; }
+
+    .screenshot-placeholder {
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      height: 240px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-subtle);
+      font-size: 15px;
+      border: 1px dashed var(--border);
+      gap: 14px;
+    }
+
+    /* Tab switching */
+    .page-section {
+      display: none;
+    }
+
+    .page-section.active {
+      display: block;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .admin-layout { flex-direction: column; }
+      .orders-table { display: block; overflow-x: auto; }
+      .drawer { width: 100%; }
+      .generator-form { flex-direction: column; }
+      .form-group { min-width: 100%; }
+      .btn { width: 100%; justify-content: center; }
+      .admin-content { padding: 20px; }
+      .admin-header { padding: 16px 20px; }
+    }
+
+    /* Navigation for demo */
+    .demo-nav {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      background: var(--surface-glass);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      padding: 8px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      z-index: 50;
+      box-shadow: 
+        0 20px 60px rgba(0,0,0,0.4),
+        0 0 40px rgba(139, 92, 246, 0.1);
+    }
+
+    .demo-nav-btn {
+      padding: 12px 18px;
+      background: transparent;
+      border: none;
+      color: var(--text-subtle);
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .demo-nav-btn:hover {
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .demo-nav-btn.active {
+      background: linear-gradient(135deg, var(--accent) 0%, #7c3aed 100%);
+      color: white;
+      box-shadow: 0 4px 15px var(--accent-glow);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Grid -->
+  <div class="grid-bg">
+    <div class="grid-pattern"></div>
+    <div class="grid-glow"></div>
+    <div class="grid-overlay"></div>
+    <div class="particles">
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+    </div>
+  </div>
+
+  <div class="page-wrapper">
+    <!-- ==================== BUYER PAGE ==================== -->
+    <div id="buyerPage" class="page-section active">
+      <div class="buyer-page">
+        <header class="header">
+          <div class="logo">
+            <div class="logo-icon">
+              <div class="logo-3d">
+                <div class="logo-hex">
+                  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <linearGradient id="hexGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#8b5cf6"/>
+                        <stop offset="50%" stop-color="#a78bfa"/>
+                        <stop offset="100%" stop-color="#8b5cf6"/>
+                      </linearGradient>
+                    </defs>
+                    <polygon points="50,3 90,25 90,75 50,97 10,75 10,25" fill="url(#hexGrad)" opacity="0.9"/>
+                    <polygon points="50,10 82,29 82,71 50,90 18,71 18,29" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                  </svg>
+                </div>
+                <div class="logo-v">V</div>
+                <div class="logo-ring"></div>
+                <div class="logo-ring"></div>
+                <div class="logo-stars">
+                  <div class="star"></div>
+                  <div class="star"></div>
+                  <div class="star"></div>
+                  <div class="star"></div>
+                </div>
+              </div>
+            </div>
+            <span class="logo-text">Bag1V-Bucks</span>
+          </div>
+          <div class="timer">
+            <span class="timer-dot"></span>
+            <span id="timerText">Истекает через 59:14</span>
+          </div>
+        </header>
+
+        <main class="main-content">
+          <div class="order-card">
+            <!-- Hero Logo -->
+            <div class="hero-logo">
+              <div class="hero-logo-glow"></div>
+              <div class="hero-logo-container">
+                <div class="hero-outer-ring"></div>
+                <div class="hero-hex">
+                  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <linearGradient id="heroGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#8b5cf6"/>
+                        <stop offset="33%" stop-color="#a78bfa"/>
+                        <stop offset="66%" stop-color="#8b5cf6"/>
+                        <stop offset="100%" stop-color="#7c3aed"/>
+                      </linearGradient>
+                      <filter id="glow">
+                        <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                        <feMerge>
+                          <feMergeNode in="coloredBlur"/>
+                          <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                      </filter>
+                    </defs>
+                    <polygon points="50,2 97,26 97,74 50,98 3,74 3,26" fill="url(#heroGrad)" filter="url(#glow)"/>
+                    <polygon points="50,12 85,32 85,68 50,88 15,68 15,32" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+                    <polygon points="50,22 73,38 73,62 50,78 27,62 27,38" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+                  </svg>
+                </div>
+                <div class="hero-inner-ring"></div>
+                <div class="hero-v">V</div>
+                <div class="hero-dots">
+                  <div class="hero-dot"></div>
+                  <div class="hero-dot"></div>
+                  <div class="hero-dot"></div>
+                  <div class="hero-dot"></div>
+                  <div class="hero-dot"></div>
+                  <div class="hero-dot"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="vbucks-amount">2 800</div>
+            <div class="vbucks-label">V-Bucks</div>
+            
+            <div class="divider"></div>
+            
+            <div class="meta-info">
+              <div class="meta-row">
+                <span class="meta-label">Валюта</span>
+                <span class="meta-value">TRY</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">ID заказа</span>
+                <span class="meta-value">#VB-2024-8X7K9M</span>
+              </div>
+            </div>
+
+            <button class="cta-button" onclick="showAuth()">
+              Войти через Epic Games
+            </button>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- ==================== AUTH PAGE ==================== -->
+    <div id="authPage" class="page-section">
+      <div class="auth-page active">
+        <div class="auth-card">
+          <div class="auth-title">Код подтверждения</div>
+          
+          <div class="code-display">
+            <div class="code-char">J</div>
+            <div class="code-char">X</div>
+            <div class="code-char">Q</div>
+            <div class="code-char">7</div>
+            <div class="code-char">R</div>
+            <div class="code-char">8</div>
+          </div>
+
+          <button class="copy-btn" onclick="copyCode()">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            <span id="copyBtnText">Скопировать код</span>
+          </button>
+
+          <div class="auth-instruction">
+            <p>Введите этот код на сайте</p>
+            <a href="https://epicgames.com/activate" class="auth-link" target="_blank">epicgames.com/activate</a>
+          </div>
+
+          <div class="waiting-indicator">
+            <div class="spinner-container">
+              <div class="spinner-ring"></div>
+              <div class="spinner-ring"></div>
+              <div class="spinner-ring"></div>
+            </div>
+            <span class="waiting-text">Ожидаем подтверждения...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TIMELINE PAGE ==================== -->
+    <div id="timelinePage" class="page-section">
+      <div class="timeline-page active">
+        <div class="timeline-header">
+          <h1 class="timeline-title">Обработка заказа</h1>
+          <p class="timeline-subtitle">Автоматическая доставка V-Bucks</p>
+        </div>
+
+        <div class="timeline">
+          <div class="timeline-item visible completed" data-step="1">
+            <div class="timeline-marker completed">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-step-header">
+                <span class="timeline-step-title">Подтверждение авторизации</span>
+                <span class="timeline-time">47s</span>
+              </div>
+              <div class="timeline-logs">
+                <div class="timeline-log-line"><span class="tag">[auth]</span> device code verified</div>
+                <div class="timeline-log-line"><span class="tag">[auth]</span> session established</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="timeline-item visible completed" data-step="2">
+            <div class="timeline-marker completed">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-step-header">
+                <span class="timeline-step-title">Проверка баланса Razer</span>
+                <span class="timeline-time">1:23</span>
+              </div>
+              <div class="timeline-logs">
+                <div class="timeline-log-line"><span class="tag">[pay]</span> razer-tr-04 balance check... <span class="success">ok</span></div>
+                <div class="timeline-log-line"><span class="tag">[pay]</span> sufficient funds verified</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="timeline-item visible completed" data-step="3">
+            <div class="timeline-marker completed">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-step-header">
+                <span class="timeline-step-title">Обход 3D Secure</span>
+                <span class="timeline-time">2:01</span>
+              </div>
+              <div class="timeline-logs">
+                <div class="timeline-log-line"><span class="tag">[pay]</span> 3DS bypassed... <span class="success">success</span></div>
+                <div class="timeline-log-line"><span class="tag">[pay]</span> transaction authorized</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="timeline-item visible completed" data-step="4">
+            <div class="timeline-marker completed">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-step-header">
+                <span class="timeline-step-title">Оплата в Epic Games</span>
+                <span class="timeline-time">3:45</span>
+              </div>
+              <div class="timeline-logs">
+                <div class="timeline-log-line"><span class="tag">[epic]</span> initiating purchase...</div>
+                <div class="timeline-log-line"><span class="tag">[epic]</span> payment processed... <span class="success">confirmed</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="timeline-item visible completed" data-step="5">
+            <div class="timeline-marker completed">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-step-header">
+                <span class="timeline-step-title">Зачисление V-Bucks</span>
+                <span class="timeline-time">4:12</span>
+              </div>
+              <div class="timeline-logs">
+                <div class="timeline-log-line"><span class="tag">[delivery]</span> crediting account...</div>
+                <div class="timeline-log-line"><span class="tag">[delivery]</span> 2800 V-Bucks <span class="success">delivered</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="success-banner visible">
+          <div class="success-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h2 class="success-title">Заказ выполнен!</h2>
+          <p class="success-text">2 800 V-Bucks успешно зачислены на ваш аккаунт Epic Games</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== ADMIN PAGE ==================== -->
+    <div id="adminPage" class="page-section">
+      <div class="admin-page active">
+        <div class="admin-layout">
+          <header class="admin-header">
+            <div class="admin-logo">
+              <div class="admin-logo-icon">V</div>
+              <span class="logo-text">Bag1V-Bucks Admin</span>
+            </div>
+          </header>
+
+          <main class="admin-content">
+            <!-- Balance Cards -->
+            <div class="balance-grid">
+              <div class="balance-card razor">
+                <div class="balance-label">💰 Razer Gold (TRY)</div>
+                <div class="balance-amount">124,850 <small>₺</small></div>
+                <div class="balance-usd">≈ $3,624 USD</div>
+              </div>
+              <div class="balance-card razor">
+                <div class="balance-label">💰 Razer Gold (USD)</div>
+                <div class="balance-amount">892 <small>$</small></div>
+                <div class="balance-usd">≈ $892 USD</div>
+              </div>
+              <div class="balance-card paypal">
+                <div class="balance-label">💳 PayPal Balance</div>
+                <div class="balance-amount">2,340 <small>$</small></div>
+                <div class="balance-usd">≈ $2,340 USD</div>
+              </div>
+            </div>
+
+            <!-- Link Generator -->
+            <div class="generator-section">
+              <h2 class="section-title">Генератор ссылок</h2>
+              <div class="generator-form">
+                <div class="form-group">
+                  <label class="form-label">Выберите пакет V-Bucks</label>
+                  <select class="form-select" id="vbucksPack">
+                    <option value="1000">1,000 V-Bucks — 129 ₺</option>
+                    <option value="2800" selected>2,800 V-Bucks — 299 ₺</option>
+                    <option value="5000">5,000 V-Bucks — 499 ₺</option>
+                    <option value="13500">13,500 V-Bucks — 1,299 ₺</option>
+                  </select>
+                </div>
+                <button class="btn btn-primary" onclick="generateLink()">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  </svg>
+                  Сгенерировать
+                </button>
+              </div>
+
+              <div class="generated-url" id="generatedUrl">
+                <div class="url-box">
+                  <span class="url-text" id="urlText">https://bag1vbucks.com/order/VB-2024-8X7K9M</span>
+                  <button class="btn-copy" onclick="copyUrl()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <span id="copyText">Копировать</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="orders-section">
+              <div class="orders-header">
+                <h2 class="section-title">Последние заказы</h2>
+              </div>
+              <table class="orders-table">
+                <thead>
+                  <tr>
+                    <th>Статус</th>
+                    <th>ID</th>
+                    <th>Пакет</th>
+                    <th>Цена</th>
+                    <th>Время</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr onclick="openDrawer(1)">
+                    <td><span class="status-badge completed"><span class="status-dot"></span>Завершён</span></td>
+                    <td class="order-id">#VB-2024-8X7K9M</td>
+                    <td><div class="order-package"><span class="package-icon">V</span>2,800 V-Bucks</div></td>
+                    <td class="order-price">299 ₺</td>
+                    <td class="order-time">только что</td>
+                  </tr>
+                  <tr onclick="openDrawer(2)">
+                    <td><span class="status-badge processing"><span class="status-dot"></span>В процессе</span></td>
+                    <td class="order-id">#VB-2024-7Y2L3N</td>
+                    <td><div class="order-package"><span class="package-icon">V</span>5,000 V-Bucks</div></td>
+                    <td class="order-price">499 ₺</td>
+                    <td class="order-time">2 мин назад</td>
+                  </tr>
+                  <tr onclick="openDrawer(3)">
+                    <td><span class="status-badge pending"><span class="status-dot"></span>Ожидает</span></td>
+                    <td class="order-id">#VB-2024-6Z1M4P</td>
+                    <td><div class="order-package"><span class="package-icon">V</span>1,000 V-Bucks</div></td>
+                    <td class="order-price">129 ₺</td>
+                    <td class="order-time">5 мин назад</td>
+                  </tr>
+                  <tr onclick="openDrawer(4)">
+                    <td><span class="status-badge failed"><span class="status-dot"></span>Ошибка</span></td>
+                    <td class="order-id">#VB-2024-5A0N5Q</td>
+                    <td><div class="order-package"><span class="package-icon">V</span>13,500 V-Bucks</div></td>
+                    <td class="order-price">1,299 ₺</td>
+                    <td class="order-time">12 мин назад</td>
+                  </tr>
+                  <tr onclick="openDrawer(5)">
+                    <td><span class="status-badge completed"><span class="status-dot"></span>Завершён</span></td>
+                    <td class="order-id">#VB-2024-4B9O6R</td>
+                    <td><div class="order-package"><span class="package-icon">V</span>2,800 V-Bucks</div></td>
+                    <td class="order-price">299 ₺</td>
+                    <td class="order-time">18 мин назад</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </main>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drawer -->
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-header">
+      <h3 class="drawer-title">Детали заказа #VB-2024-8X7K9M</h3>
+      <button class="drawer-close" onclick="closeDrawer()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <div class="drawer-content">
+      <div class="drawer-section">
+        <h4 class="drawer-section-title">Webhook Response</h4>
+        <div class="json-block" id="webhookJson">{
+  <span class="json-key">"status"</span>: <span class="json-string">"success"</span>,
+  <span class="json-key">"order_id"</span>: <span class="json-string">"VB-2024-8X7K9M"</span>,
+  <span class="json-key">"amount"</span>: <span class="json-number">299</span>,
+  <span class="json-key">"currency"</span>: <span class="json-string">"TRY"</span>,
+  <span class="json-key">"vbucks_delivered"</span>: <span class="json-number">2800</span>,
+  <span class="json-key">"timestamp"</span>: <span class="json-string">"2024-01-15T14:32:18Z"</span>,
+  <span class="json-key">"automation"</span>: {
+    <span class="json-key">"browser"</span>: <span class="json-string">"playwright-chromium"</span>,
+    <span class="json-key">"steps_completed"</span>: <span class="json-number">5</span>,
+    <span class="json-key">"total_time"</span>: <span class="json-string">"4m 12s"</span>
+  }
+}</div>
+      </div>
+      <div class="drawer-section">
+        <h4 class="drawer-section-title">Скриншот чека</h4>
+        <div class="screenshot-placeholder">
+          Screenshot from Playwright
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo Navigation -->
+  <nav class="demo-nav">
+    <button class="demo-nav-btn active" onclick="switchPage('buyerPage')">Покупатель</button>
+    <button class="demo-nav-btn" onclick="switchPage('authPage')">Авторизация</button>
+    <button class="demo-nav-btn" onclick="switchPage('timelinePage')">Таймлайн</button>
+    <button class="demo-nav-btn" onclick="switchPage('adminPage')">Админ</button>
+  </nav>
+
+  <script>
+    // Page navigation
+    function switchPage(pageId) {
+      document.querySelectorAll('.page-section').forEach(page => {
+        page.classList.remove('active');
+      });
+      document.getElementById(pageId).classList.add('active');
+      
+      document.querySelectorAll('.demo-nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+    }
+
+    // Show auth page
+    function showAuth() {
+      switchPage('authPage');
+      document.querySelectorAll('.demo-nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelectorAll('.demo-nav-btn')[1].classList.add('active');
+      
+      // Simulate waiting and show timeline after 3 seconds
+      setTimeout(() => {
+        switchPage('timelinePage');
+        document.querySelectorAll('.demo-nav-btn').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        document.querySelectorAll('.demo-nav-btn')[2].classList.add('active');
+      }, 3000);
+    }
+
+    // Copy code
+    function copyCode() {
+      const code = 'JXQR78';
+      navigator.clipboard.writeText(code).then(() => {
+        const btnText = document.getElementById('copyBtnText');
+        btnText.textContent = 'Скопировано!';
+        setTimeout(() => {
+          btnText.textContent = 'Скопировать код';
+        }, 2000);
+      });
+    }
+
+    // Generate link
+    function generateLink() {
+      const pack = document.getElementById('vbucksPack').value;
+      const orderId = 'VB-' + Date.now().toString(36).toUpperCase();
+      const url = `https://bag1vbucks.com/order/${orderId}`;
+      document.getElementById('urlText').textContent = url;
+      document.getElementById('generatedUrl').classList.add('visible');
+    }
+
+    // Copy URL
+    function copyUrl() {
+      const url = document.getElementById('urlText').textContent;
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = document.querySelector('.btn-copy');
+        btn.classList.add('copied');
+        document.getElementById('copyText').textContent = 'Скопировано!';
+        setTimeout(() => {
+          btn.classList.remove('copied');
+          document.getElementById('copyText').textContent = 'Копировать';
+        }, 2000);
+      });
+    }
+
+    // Drawer
+    function openDrawer(orderId) {
+      document.getElementById('drawerOverlay').classList.add('active');
+      document.getElementById('drawer').classList.add('active');
+    }
+
+    function closeDrawer() {
+      document.getElementById('drawerOverlay').classList.remove('active');
+      document.getElementById('drawer').classList.remove('active');
+    }
+
+    // Timer countdown (demo)
+    let timerSeconds = 59 * 60 + 14;
+    setInterval(() => {
+      timerSeconds--;
+      if (timerSeconds > 0) {
+        const mins = Math.floor(timerSeconds / 60);
+        const secs = timerSeconds % 60;
+        document.getElementById('timerText').textContent = 
+          `Истекает через ${mins}:${secs.toString().padStart(2, '0')}`;
+      }
+    }, 1000);
+
+    // Close drawer on Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeDrawer();
+    });
+
+    // Staggered animation for timeline items
+    const timelineItems = document.querySelectorAll('.timeline-item');
+    timelineItems.forEach((item, index) => {
+      setTimeout(() => {
+        item.classList.add('visible');
+      }, index * 150);
+    });
+  </script>
+</body>
+</html>
