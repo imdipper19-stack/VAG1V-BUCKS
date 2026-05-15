@@ -36,8 +36,24 @@ export default function TimelinePage({ params }: TimelinePageProps) {
   const [logsCount, setLogsCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [queueInfo, setQueueInfo] = useState<{ queueSize: number; position: number | null } | null>(null);
 
   const { currentStep, progress } = useOrderStream(orderId);
+
+  useEffect(() => {
+    if (status === 'completed' || status === 'failed') return;
+
+    const fetchQueue = async () => {
+      try {
+        const res = await ordersApi.getQueuePosition(orderId);
+        if (res.success) setQueueInfo(res.data);
+      } catch {}
+    };
+
+    fetchQueue();
+    const queueInterval = setInterval(fetchQueue, 5000);
+    return () => clearInterval(queueInterval);
+  }, [orderId, status]);
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -112,6 +128,33 @@ export default function TimelinePage({ params }: TimelinePageProps) {
           </div>
         )}
       </div>
+
+      {/* Queue info */}
+      {!isCompleted && !isFailed && queueInfo && queueInfo.queueSize > 0 && (
+        <div
+          className="mb-6 flex items-center justify-center gap-6 px-5 py-3.5 rounded-2xl mx-auto"
+          style={{
+            background: 'rgba(234, 179, 8, 0.06)',
+            border: '1px solid rgba(234, 179, 8, 0.15)',
+          }}
+        >
+          <div className="text-center">
+            <span className="block text-xs" style={{ color: '#71717a' }}>В очереди</span>
+            <span className="block text-lg font-bold font-mono" style={{ color: '#eab308' }}>{queueInfo.queueSize}</span>
+          </div>
+          {queueInfo.position !== null && (
+            <>
+              <div className="w-px h-8" style={{ background: 'rgba(255,255,255,0.08)' }} />
+              <div className="text-center">
+                <span className="block text-xs" style={{ color: '#71717a' }}>Ваше место</span>
+                <span className="block text-lg font-bold font-mono" style={{ color: queueInfo.position === 0 ? '#22c55e' : '#8b5cf6' }}>
+                  {queueInfo.position === 0 ? '⚡ Сейчас' : `#${queueInfo.position}`}
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Steps */}
       <div className="space-y-4">
