@@ -5,7 +5,7 @@ import { OrdersModule } from '../orders/orders.module';
 import { QueueModule } from '../queue/queue.module';
 
 @Module({
-  imports: [OrdersModule, forwardRef(() => QueueModule)],
+  imports: [forwardRef(() => OrdersModule), forwardRef(() => QueueModule)],
   controllers: [AuthController],
   providers: [AuthService],
   exports: [AuthService],
