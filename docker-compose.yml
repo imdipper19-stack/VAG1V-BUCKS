@@ -68,11 +68,12 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: https://bag1v-bucks.shop/api
     container_name: bag1vbucks-frontend
     ports:
       - "3002:3002"
     environment:
-      NEXT_PUBLIC_API_URL: http://backend:3001/api
       NODE_ENV: production
     depends_on:
       - backend
