@@ -37,7 +37,7 @@ import { ORDER_QUEUE_NAME } from './constants';
         removeOnFail: 1000,
       },
     }),
-    OrdersModule,
+    forwardRef(() => OrdersModule),
     EpicModule,
     CommonModule,
     ProxyModule,

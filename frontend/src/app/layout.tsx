@@ -54,7 +54,10 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: '/favicon.ico',
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    apple: '/favicon.svg',
   },
   verification: {
     // Добавь сюда коды верификации после регистрации в вебмастерах:
