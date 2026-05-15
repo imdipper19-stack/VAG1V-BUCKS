@@ -1,148 +1,153 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, HttpException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  HttpCode,
+  HttpStatus,
+  HttpException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { OrdersService, Order } from '../orders/orders.service';
+import { OrdersService } from '../orders/orders.service';
+import { QueueService } from '../queue/queue.service';
+import { Order, OrderStatusEnum, LogLevel } from '../database/entities';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private authService: AuthService,
     private ordersService: OrdersService,
+    private queueService: QueueService,
   ) {}
 
   /**
-   * POST /api/auth/initiate
-   * Начинает процесс авторизации Epic Games Device Flow
-   * Возвращает 8-символьный код подтверждения
+   * GET /api/auth/login-url
+   * Возвращает URL на который нужно отправить покупателя для логина в Epic.
+   * После логина Epic покажет JSON с полем authorizationCode, которое покупатель копирует и вставляет.
    */
-  @Post('initiate')
+  @Get('login-url')
+  getLoginUrl() {
+    return {
+      success: true,
+      data: {
+        loginUrl: this.authService.getAuthorizationUrl(),
+        codeUrl: this.authService.getAuthorizationCodeUrl(),
+      },
+    };
+  }
+
+  /**
+   * POST /api/auth/submit-code
+   * Покупатель прислал authorization code — обмениваем на токены и продолжаем обработку.
+   */
+  @Post('submit-code')
   @HttpCode(HttpStatus.OK)
-  async initiateAuth(@Body() body: { orderId: string }) {
-    const { orderId } = body;
+  async submitCode(@Body() body: { orderId: string; code: string }) {
+    const { orderId, code } = body;
 
-    let order: Order | undefined;
+    if (!code || code.trim().length < 10) {
+      throw new HttpException('Invalid code', HttpStatus.BAD_REQUEST);
+    }
+
+    let order: Order;
     try {
-      order = await this.ordersService.findById(orderId);
+      order = await this.ordersService.findByOrderId(orderId);
     } catch {
-      throw new HttpException('Order not found', 404);
+      throw new HttpException('Order not found', HttpStatus.NOT_FOUND);
     }
 
-    // Проверяем, есть ли уже активный код
-    if (order.epicDeviceCode && order.epicDeviceCodeExpiresAt) {
-      const expiresAt = new Date(order.epicDeviceCodeExpiresAt);
-      if (expiresAt > new Date()) {
-        return {
-          success: true,
-          data: {
-            deviceCode: order.epicDeviceCode,
-            userCode: order.epicUserCode || order.epicDeviceCode,
-            verificationUri: 'https://www.epicgames.com/activate',
-            interval: 5,
-            expiresAt: expiresAt,
-          },
-        };
-      }
+    // Принимаем заказы в статусе PENDING или AWAITING_AUTH
+    if (
+      order.status !== OrderStatusEnum.PENDING &&
+      order.status !== OrderStatusEnum.AWAITING_AUTH
+    ) {
+      throw new HttpException(
+        `Invalid order status: ${order.status}`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
-    // Создаём новый код авторизации через Epic Games API
-    const authData = await this.authService.initiateDeviceAuth();
+    try {
+      // Обмениваем код на токены
+      const auth = await this.authService.exchangeAuthorizationCode(code);
 
-    // Сохраняем в заказ
-    await this.ordersService.updateStatus(orderId, order.status, {
-      epicDeviceCode: authData.deviceCode,
-      epicUserCode: authData.userCode,
-      epicDeviceCodeExpiresAt: new Date(Date.now() + authData.expiresIn * 1000),
+      // Сохраняем токены в заказе
+      await this.ordersService.updateStatus(
+        order.id,
+        OrderStatusEnum.AUTH_COMPLETED,
+        {
+          epicAccessToken: auth.accessToken,
+          epicRefreshToken: auth.refreshToken,
+          epicAccountId: auth.accountId,
+          epicDisplayName: auth.displayName,
+        },
+      );
+
+      await this.ordersService.addTimelineLog(order.id, {
+        tag: '[auth]',
+        message: `Authorized as ${auth.displayName}`,
+        level: LogLevel.SUCCESS,
+      });
+
+      // Добавляем в очередь обработки
+      await this.queueService.queueOrderForProcessing(order.orderId);
+
+      await this.ordersService.addTimelineLog(order.id, {
+        tag: '[system]',
+        message: 'Order queued for processing',
+        level: LogLevel.INFO,
+      });
+
+      return {
+        success: true,
+        data: {
+          displayName: auth.displayName,
+          accountId: auth.accountId,
+        },
+      };
+    } catch (err: any) {
+      await this.ordersService.addTimelineLog(order.id, {
+        tag: '[auth]',
+        message: `Auth failed: ${err.message}`,
+        level: LogLevel.ERROR,
+      });
+
+      throw new HttpException(
+        err.message || 'Authorization failed',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  /**
+   * POST /api/auth/region-code
+   * Покупатель прислал код подтверждения смены региона из email.
+   * OrderProcessingService ждёт этот код чтобы завершить смену региона.
+   */
+  @Post('region-code')
+  @HttpCode(HttpStatus.OK)
+  async submitRegionCode(@Body() body: { orderId: string; code: string }) {
+    const { orderId, code } = body;
+
+    if (!code || code.trim().length < 4) {
+      throw new HttpException('Invalid code', HttpStatus.BAD_REQUEST);
+    }
+
+    let order: Order;
+    try {
+      order = await this.ordersService.findByOrderId(orderId);
+    } catch {
+      throw new HttpException('Order not found', HttpStatus.NOT_FOUND);
+    }
+
+    // Сохраняем код с префиксом REGION: — OrderProcessingService его подхватит
+    await this.ordersService.updateOrder(order.id, {
+      epicUserCode: `REGION:${code.trim()}`,
     });
 
     return {
       success: true,
-      data: {
-        deviceCode: authData.deviceCode,
-        userCode: authData.userCode,
-        verificationUri: authData.verificationUriComplete || authData.verificationUri,
-        interval: authData.interval,
-        expiresAt: new Date(Date.now() + authData.expiresIn * 1000),
-      },
-    };
-  }
-
-  /**
-   * POST /api/auth/poll
-   * Проверяет, подтвердил ли пользователь авторизацию
-   * Нужно вызывать каждые interval секунд
-   */
-  @Post('poll')
-  @HttpCode(HttpStatus.OK)
-  async pollAuth(@Body() body: { orderId: string }) {
-    const { orderId } = body;
-
-    let order: Order | undefined;
-    try {
-      order = await this.ordersService.findById(orderId);
-    } catch {
-      throw new HttpException('Order not found', 404);
-    }
-
-    if (!order.epicDeviceCode) {
-      throw new HttpException('No device code found for this order', 400);
-    }
-
-    // Проверяем, не истёк ли код
-    if (order.epicDeviceCodeExpiresAt && new Date() > new Date(order.epicDeviceCodeExpiresAt)) {
-      return {
-        success: false,
-        error: 'Code expired',
-        expired: true,
-      };
-    }
-
-    const authResult = await this.authService.pollForAuth(order.epicDeviceCode);
-
-    if (authResult.authenticated) {
-      // Успех! Сохраняем токены
-      await this.ordersService.updateStatus(orderId, order.status, {
-        epicAccessToken: authResult.accessToken,
-        epicRefreshToken: authResult.refreshToken,
-        epicExchangeCode: authResult.exchangeCode,
-      });
-
-      await this.ordersService.addTimelineLog(orderId, {
-        tag: '[auth]',
-        message: 'Device code verified',
-        status: 'success',
-      });
-
-      await this.ordersService.addTimelineLog(orderId, {
-        tag: '[auth]',
-        message: 'Session established',
-        status: 'success',
-      });
-    }
-
-    return {
-      success: true,
-      data: {
-        authenticated: authResult.authenticated,
-        exchangeCode: authResult.exchangeCode,
-        error: authResult.error,
-      },
-    };
-  }
-
-  /**
-   * POST /api/auth/verify
-   * Получает информацию об аккаунте Epic
-   */
-  @Post('verify')
-  @HttpCode(HttpStatus.OK)
-  async verifyAccount(@Body() body: { exchangeCode: string }) {
-    const account = await this.authService.getEpicAccount(body.exchangeCode);
-
-    return {
-      success: true,
-      data: {
-        accountId: account.id,
-        displayName: account.displayName,
-      },
+      data: { message: 'Region confirmation code received' },
     };
   }
 }

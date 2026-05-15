@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { ordersApi } from '@/lib/api';
+import { useOrderStream } from '@/lib/useOrderStream';
 import { HeroLogo } from '@/components/buyer/HeroLogo';
 import { Button } from '@/components/ui/Button';
 
@@ -22,24 +23,29 @@ export default function OrderPage() {
   const [loading, setLoading] = useState(true);
   const [timeLeft, setTimeLeft] = useState('');
 
+  // SSE — live-обновления статуса. Подписываемся только после того, как загрузили заказ.
+  const { lastEvent } = useOrderStream(order ? orderId : null);
+
+  // Применяем live-обновления к локальному стейту
+  useEffect(() => {
+    if (!lastEvent || !order) return;
+    if (lastEvent.status && lastEvent.status !== order.status) {
+      setOrder(prev => prev ? { ...prev, status: lastEvent.status } : prev);
+    }
+  }, [lastEvent, order]);
+
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        console.log('Fetching order:', orderId);
         const response = await ordersApi.getById(orderId);
-        console.log('Response:', response);
-        if (response?.success) {
+        if (response?.success && response?.data) {
           setOrder(response.data);
-        } else {
-          console.log('API returned success: false');
         }
       } catch (error: any) {
         console.error('Failed to fetch order:', error);
-        console.error('Error response:', error?.response?.data);
+      } finally {
         setLoading(false);
-        return;
       }
-      setLoading(false);
     };
 
     if (orderId) {

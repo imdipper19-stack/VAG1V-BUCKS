@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /api/*
+Disallow: /order/*/auth
+
+Sitemap: https://bag1v-bucks.shop/sitemap.xml

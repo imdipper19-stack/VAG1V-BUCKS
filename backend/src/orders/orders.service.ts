@@ -1,138 +1,282 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, In, LessThan } from 'typeorm';
 import { nanoid } from 'nanoid';
+import {
+  Order,
+  OrderStatusEnum,
+  TimelineLogEntry,
+  LogLevel,
+} from '../database/entities';
 
-export enum OrderStatus {
-  PENDING = 'pending',
-  AWAITING_AUTH = 'awaiting_auth',
-  AUTH_COMPLETED = 'auth_completed',
-  PROCESSING = 'processing',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
+export interface FindOrdersParams {
+  status?: OrderStatusEnum | OrderStatusEnum[];
+  sellerId?: string;
+  limit?: number;
+  offset?: number;
 }
 
-export interface TimelineLog {
-  timestamp: string;
-  tag: string;
-  message: string;
-  status?: 'success' | 'error' | 'info';
+export interface FindOrdersResult {
+  orders: Order[];
+  total: number;
+  limit: number;
+  offset: number;
 }
 
-export interface Order {
-  id: string;
-  orderId: string;
-  shortUrlSlug: string;
+export interface CreateOrderData {
   vbucksAmount: number;
   priceTRY: number;
-  currency: string;
-  status: string;
-  epicDeviceCode?: string;
-  epicUserCode?: string;
-  epicDeviceCodeExpiresAt?: Date;
-  epicAccessToken?: string;
-  epicRefreshToken?: string;
-  epicExchangeCode?: string;
-  razerAccountId?: string;
-  transactionId?: string;
-  balanceBefore?: number;
-  balanceAfter?: number;
-  timelineLogs: TimelineLog[];
-  webhookUrl?: string;
-  webhookResponse?: string;
-  screenshotUrl?: string;
-  errorMessage?: string;
   sellerId?: string;
-  buyerIp?: string;
-  userAgent?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  completedAt?: Date;
-  expiresAt: Date;
+  webhookUrl?: string;
+  region?: string;
 }
 
 @Injectable()
 export class OrdersService {
-  private orders: Map<string, Order> = new Map();
+  private readonly logger = new Logger(OrdersService.name);
 
-  createOrder(data: {
-    vbucksAmount: number;
-    priceTRY: number;
-    sellerId?: string;
-    webhookUrl?: string;
-  }): Order {
+  constructor(
+    @InjectRepository(Order)
+    private readonly orderRepository: Repository<Order>,
+    @InjectRepository(TimelineLogEntry)
+    private readonly timelineLogRepository: Repository<TimelineLogEntry>,
+  ) {}
+
+  async createOrder(data: CreateOrderData): Promise<Order> {
     const orderId = `VB-${new Date().getFullYear()}-${nanoid(6).toUpperCase()}`;
-    const id = nanoid();
     const shortUrlSlug = nanoid(10);
 
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 60);
 
-    const order: Order = {
-      id,
+    const order = this.orderRepository.create({
       orderId,
       shortUrlSlug,
       vbucksAmount: data.vbucksAmount,
       priceTRY: data.priceTRY,
       currency: 'TRY',
-      status: OrderStatus.PENDING,
+      region: data.region || 'TR',
+      status: OrderStatusEnum.PENDING,
       sellerId: data.sellerId,
       webhookUrl: data.webhookUrl,
-      timelineLogs: [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
       expiresAt,
+    });
+
+    const savedOrder = await this.orderRepository.save(order);
+
+    await this.addTimelineLog(savedOrder.id, {
+      tag: '[system]',
+      message: 'Order created',
+      level: LogLevel.INFO,
+    });
+
+    this.logger.log(`Order created: ${orderId}`);
+    return savedOrder;
+  }
+
+  async findById(id: string): Promise<Order> {
+    const order = await this.orderRepository.findOne({
+      where: { id },
+      relations: ['timelineLogs'],
+      order: { timelineLogs: { timestamp: 'ASC' } },
+    });
+    if (!order) {
+      throw new Error('Order not found');
+    }
+    return order;
+  }
+
+  async findByOrderId(orderId: string): Promise<Order> {
+    const order = await this.orderRepository.findOne({
+      where: { orderId },
+      relations: ['timelineLogs'],
+      order: { timelineLogs: { timestamp: 'ASC' } },
+    });
+    if (!order) {
+      throw new Error('Order not found');
+    }
+    return order;
+  }
+
+  async findBySlug(slug: string): Promise<Order> {
+    const order = await this.orderRepository.findOne({
+      where: { shortUrlSlug: slug },
+      relations: ['timelineLogs'],
+      order: { timelineLogs: { timestamp: 'ASC' } },
+    });
+    if (!order) {
+      throw new Error('Order not found');
+    }
+    return order;
+  }
+
+  /**
+   * Получить заказы с фильтрацией и пагинацией на уровне БД.
+   * Возвращает orders + total для UI пагинации.
+   */
+  async findOrders(params: FindOrdersParams = {}): Promise<FindOrdersResult> {
+    const limit = Math.min(Math.max(params.limit ?? 50, 1), 200);
+    const offset = Math.max(params.offset ?? 0, 0);
+
+    const qb = this.orderRepository
+      .createQueryBuilder('order')
+      .leftJoinAndSelect('order.timelineLogs', 'timelineLogs')
+      .orderBy('order.createdAt', 'DESC')
+      .addOrderBy('timelineLogs.timestamp', 'ASC')
+      .skip(offset)
+      .take(limit);
+
+    if (params.status) {
+      if (Array.isArray(params.status)) {
+        qb.andWhere('order.status IN (:...statuses)', { statuses: params.status });
+      } else {
+        qb.andWhere('order.status = :status', { status: params.status });
+      }
+    }
+
+    if (params.sellerId) {
+      qb.andWhere('order.sellerId = :sellerId', { sellerId: params.sellerId });
+    }
+
+    const [orders, total] = await qb.getManyAndCount();
+    return { orders, total, limit, offset };
+  }
+
+  /**
+   * @deprecated Используйте findOrders() для пагинации. Этот метод грузит ВСЁ в память.
+   * Оставлен для совместимости с местами, где нужно итерироваться по всем заказам
+   * (например, бэкап). Не использовать в hot path.
+   */
+  async findAll(limit?: number): Promise<Order[]> {
+    const qb = this.orderRepository
+      .createQueryBuilder('order')
+      .leftJoinAndSelect('order.timelineLogs', 'timelineLogs')
+      .orderBy('order.createdAt', 'DESC');
+
+    if (limit) {
+      qb.take(limit);
+    }
+
+    return qb.getMany();
+  }
+
+  /**
+   * Эффективный поиск просроченных заказов для OrderExpirationService.
+   * Тянет только заказы со статусом PENDING/AWAITING_AUTH и expiresAt < now.
+   */
+  async findExpiredOrders(now: Date = new Date()): Promise<Order[]> {
+    return this.orderRepository.find({
+      where: {
+        status: In([OrderStatusEnum.PENDING, OrderStatusEnum.AWAITING_AUTH]),
+        expiresAt: LessThan(now),
+      },
+      select: ['id', 'orderId', 'status', 'expiresAt'],
+    });
+  }
+
+  async updateOrder(id: string, data: Partial<Order>): Promise<Order> {
+    await this.orderRepository.update(id, {
+      ...data,
+      updatedAt: new Date(),
+    });
+    return this.findById(id);
+  }
+
+  async updateStatus(
+    id: string,
+    status: OrderStatusEnum,
+    additionalData?: Partial<Order>,
+  ): Promise<Order> {
+    const updateData: Partial<Order> = {
+      status,
+      ...additionalData,
     };
 
-    this.orders.set(id, order);
-    return order;
-  }
-
-  findById(id: string): Order {
-    const order = this.orders.get(id);
-    if (!order) {
-      throw new Error('Order not found');
+    if (status === OrderStatusEnum.COMPLETED) {
+      updateData.completedAt = new Date();
     }
-    return order;
+
+    await this.orderRepository.update(id, updateData);
+
+    await this.addTimelineLog(id, {
+      tag: '[system]',
+      message: `Status changed to ${status}`,
+      level: LogLevel.INFO,
+    });
+
+    return this.findById(id);
   }
 
-  findByOrderId(orderId: string): Order {
-    const order = Array.from(this.orders.values()).find(o => o.orderId === orderId);
-    if (!order) {
-      throw new Error('Order not found');
-    }
-    return order;
+  async addTimelineLog(
+    id: string,
+    log: { tag: string; message: string; level?: LogLevel },
+  ): Promise<TimelineLogEntry> {
+    const logEntry = this.timelineLogRepository.create({
+      orderId: id,
+      tag: log.tag,
+      message: log.message,
+      level: log.level || LogLevel.INFO,
+    });
+
+    return this.timelineLogRepository.save(logEntry);
   }
 
-  findBySlug(slug: string): Order {
-    const order = Array.from(this.orders.values()).find(o => o.shortUrlSlug === slug);
-    if (!order) {
-      throw new Error('Order not found');
-    }
-    return order;
+  async addTimelineLogDirect(
+    orderId: string,
+    tag: string,
+    message: string,
+    level: LogLevel = LogLevel.INFO,
+  ): Promise<void> {
+    const logEntry = this.timelineLogRepository.create({
+      orderId,
+      tag,
+      message,
+      level,
+    });
+    await this.timelineLogRepository.save(logEntry);
   }
 
-  findAll(): Order[] {
-    return Array.from(this.orders.values()).sort(
-      (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-    );
+  /**
+   * Получить статистику заказов
+   */
+  async getStats(): Promise<{
+    total: number;
+    pending: number;
+    processing: number;
+    completed: number;
+    failed: number;
+  }> {
+    const total = await this.orderRepository.count();
+    const pending = await this.orderRepository.count({
+      where: { status: OrderStatusEnum.PENDING },
+    });
+    const processing = await this.orderRepository.count({
+      where: { status: OrderStatusEnum.PROCESSING },
+    });
+    const completed = await this.orderRepository.count({
+      where: { status: OrderStatusEnum.COMPLETED },
+    });
+    const failed = await this.orderRepository.count({
+      where: { status: OrderStatusEnum.FAILED },
+    });
+
+    return { total, pending, processing, completed, failed };
   }
 
-  updateStatus(id: string, status: string, data: Partial<Order>): Order {
-    const order = this.findById(id);
-    Object.assign(order, data, { updatedAt: new Date() });
-    if (data.status) {
-      order.status = data.status;
-    }
-    if (status !== order.status) {
-      order.status = status;
-    }
-    return order;
+  /**
+   * Увеличить счётчик повторных попыток
+   */
+  async incrementRetryCount(id: string): Promise<void> {
+    await this.orderRepository.increment({ id }, 'retryCount', 1);
   }
 
-  addTimelineLog(id: string, log: { tag: string; message: string; status?: 'success' | 'error' | 'info' }): void {
-    const order = this.findById(id);
-    order.timelineLogs.push({
-      timestamp: new Date().toISOString(),
-      ...log,
+  /**
+   * Записать ошибку в заказ
+   */
+  async setError(id: string, errorMessage: string): Promise<void> {
+    await this.orderRepository.update(id, {
+      errorMessage,
+      status: OrderStatusEnum.FAILED,
     });
   }
 }

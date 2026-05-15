@@ -1,0 +1,1218 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bag1V-Bucks Redesign Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #050507;
+      --panel: #101014;
+      --panel-soft: #15141b;
+      --line: rgba(255, 255, 255, 0.08);
+      --line-strong: rgba(255, 255, 255, 0.14);
+      --text: #f7f5ff;
+      --muted: #aaa5b9;
+      --soft: #706b80;
+      --purple: #8f5cff;
+      --purple-2: #6d42e8;
+      --cyan: #27e8f4;
+      --green: #41e59d;
+      --danger: #ff6378;
+      --radius: 24px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 50% 8%, rgba(143, 92, 255, 0.16), transparent 34%),
+        radial-gradient(circle at 82% 42%, rgba(39, 232, 244, 0.08), transparent 30%),
+        linear-gradient(180deg, #07070a 0%, #050507 52%, #08070c 100%);
+      color: var(--text);
+      font-family: Manrope, system-ui, sans-serif;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+      background-size: 34px 34px;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.35) 58%, transparent 100%);
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 26%, transparent 0 22%, rgba(0,0,0,0.38) 62%, rgba(0,0,0,0.82) 100%);
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 18px 0 72px;
+    }
+
+    .nav {
+      width: min(840px, 100%);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(13, 12, 18, 0.78);
+      box-shadow: 0 18px 80px rgba(0, 0, 0, 0.34);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: max-content;
+      padding-left: 4px;
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, rgba(143, 92, 255, 0.95), rgba(109, 66, 232, 0.9));
+      box-shadow: 0 0 24px rgba(143, 92, 255, 0.42);
+    }
+
+    .brand-icon img {
+      width: 18px;
+      height: 18px;
+      object-fit: contain;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 22px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .nav-links a {
+      cursor: default;
+      transition: color 180ms ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: max-content;
+    }
+
+    .lang {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      padding: 5px 8px;
+      font-size: 11px;
+      font-family: JetBrains Mono, monospace;
+    }
+
+    .login {
+      border: 0;
+      border-radius: 999px;
+      padding: 8px 14px;
+      color: #fbfaff;
+      background: linear-gradient(135deg, var(--purple), var(--purple-2));
+      font-weight: 800;
+      box-shadow: 0 0 28px rgba(143, 92, 255, 0.34);
+    }
+
+    .hero {
+      position: relative;
+      min-height: 570px;
+      display: grid;
+      place-items: center;
+      padding: 92px 0 40px;
+      text-align: center;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      padding: 7px 11px;
+      border: 1px solid rgba(143, 92, 255, 0.24);
+      border-radius: 999px;
+      color: #dcd3ff;
+      background: rgba(143, 92, 255, 0.12);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .chip-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 14px rgba(65, 229, 157, 0.9);
+    }
+
+    h1 {
+      max-width: 770px;
+      margin: 0 auto;
+      font-size: clamp(56px, 9vw, 118px);
+      line-height: 0.83;
+      letter-spacing: -0.085em;
+      font-weight: 800;
+    }
+
+    .accent-word {
+      color: #b79dff;
+      text-shadow: 0 0 42px rgba(143, 92, 255, 0.48);
+    }
+
+    .subtitle {
+      max-width: 560px;
+      margin: 20px auto 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.65;
+    }
+
+    .cta-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .btn {
+      border: 1px solid transparent;
+      border-radius: 14px;
+      padding: 14px 18px;
+      font-weight: 800;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--panel-soft);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--purple), var(--purple-2));
+      box-shadow: 0 10px 36px rgba(143, 92, 255, 0.28);
+    }
+
+    .btn-secondary {
+      border-color: var(--line);
+      background: rgba(255,255,255,0.035);
+      color: #cbc6d6;
+    }
+
+    .btn,
+    .login,
+    .pack button {
+      cursor: pointer;
+      transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), border-color 220ms ease, background 220ms ease, box-shadow 220ms ease;
+    }
+
+    .btn:hover,
+    .login:hover,
+    .pack button:hover {
+      transform: translateY(-2px);
+    }
+
+    .proof {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 22px;
+      color: var(--soft);
+      font-family: JetBrains Mono, monospace;
+      font-size: 11px;
+    }
+
+    .mockup-wrap {
+      position: relative;
+      width: min(830px, 100%);
+      margin: -36px auto 0;
+      perspective: 1200px;
+    }
+
+    .mockup-glow {
+      position: absolute;
+      inset: 18% 10% -10%;
+      background: radial-gradient(circle, rgba(143, 92, 255, 0.3), transparent 68%);
+      filter: blur(44px);
+    }
+
+    .mockup {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line-strong);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(24, 23, 31, 0.96), rgba(10, 10, 14, 0.96));
+      box-shadow: 0 34px 110px rgba(0, 0, 0, 0.62), 0 0 0 1px rgba(143, 92, 255, 0.06) inset;
+      transform: rotateX(5deg);
+    }
+
+    .window-bar {
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,0.025);
+    }
+
+    .dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .dots i {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: block;
+    }
+
+    .dots i:nth-child(1) { background: #ff605c; }
+    .dots i:nth-child(2) { background: #ffbd44; }
+    .dots i:nth-child(3) { background: #00ca4e; }
+
+    .url-pill {
+      width: 250px;
+      height: 16px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.38);
+      color: var(--soft);
+      display: grid;
+      place-items: center;
+      font-size: 8px;
+      font-family: JetBrains Mono, monospace;
+    }
+
+    .mockup-body {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      min-height: 360px;
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--line);
+      padding: 18px 14px;
+      background: rgba(255,255,255,0.018);
+    }
+
+    .side-title {
+      color: var(--soft);
+      font-family: JetBrains Mono, monospace;
+      font-size: 10px;
+      margin-bottom: 14px;
+    }
+
+    .side-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      padding: 10px 11px;
+      border-radius: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      background: transparent;
+    }
+
+    .side-item.active {
+      color: var(--text);
+      background: rgba(143, 92, 255, 0.13);
+    }
+
+    .side-badge {
+      color: #cfbfff;
+      font-family: JetBrains Mono, monospace;
+      font-size: 10px;
+    }
+
+    .content {
+      padding: 18px;
+    }
+
+    .content-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .content-head h2 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: -0.04em;
+    }
+
+    .status-pill {
+      color: var(--green);
+      background: rgba(65, 229, 157, 0.11);
+      border: 1px solid rgba(65, 229, 157, 0.2);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .order-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .order-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      background: rgba(255,255,255,0.028);
+    }
+
+    .order-main {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .coin-box {
+      width: 72px;
+      height: 72px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      background: radial-gradient(circle at 50% 40%, rgba(39,232,244,0.18), rgba(143,92,255,0.12));
+      border: 1px solid rgba(255,255,255,0.09);
+    }
+
+    .coin-box img {
+      width: 56px;
+      height: 56px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 18px rgba(39, 232, 244, 0.24));
+    }
+
+    .small-label {
+      color: var(--soft);
+      font-family: JetBrains Mono, monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .amount {
+      margin-top: 2px;
+      font-family: JetBrains Mono, monospace;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.05em;
+    }
+
+    .price {
+      margin-top: 7px;
+      color: #cfc9dc;
+      font-size: 13px;
+    }
+
+    .metric-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px;
+      background: rgba(0,0,0,0.12);
+    }
+
+    .metric b {
+      display: block;
+      margin-top: 4px;
+      font-family: JetBrains Mono, monospace;
+      font-size: 13px;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 9px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 20px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .step-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #06120d;
+      background: var(--green);
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .step.pending .step-dot {
+      color: var(--soft);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--line);
+    }
+
+    .step-time {
+      color: var(--soft);
+      font-family: JetBrains Mono, monospace;
+      font-size: 10px;
+    }
+
+    .chart {
+      position: relative;
+      height: 104px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(143,92,255,0.16), rgba(143,92,255,0.02));
+    }
+
+    .chart svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .packages {
+      padding: 74px 0 30px;
+    }
+
+    .section {
+      padding: 84px 0 22px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 28px;
+      margin-bottom: 20px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: clamp(34px, 5vw, 58px);
+      line-height: 0.94;
+      letter-spacing: -0.065em;
+    }
+
+    .section-head p {
+      max-width: 360px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .package-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.9fr 0.9fr;
+      gap: 12px;
+    }
+
+    .pack {
+      position: relative;
+      min-height: 188px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.018));
+      transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1), border-color 260ms ease, box-shadow 260ms ease;
+    }
+
+    .pack:hover {
+      transform: translateY(-6px);
+      border-color: rgba(143,92,255,0.28);
+      box-shadow: 0 18px 70px rgba(0,0,0,0.34);
+    }
+
+    .pack.featured {
+      border-color: rgba(143,92,255,0.42);
+      background:
+        radial-gradient(circle at 76% 10%, rgba(143,92,255,0.28), transparent 42%),
+        linear-gradient(180deg, rgba(143,92,255,0.12), rgba(255,255,255,0.018));
+      box-shadow: 0 20px 80px rgba(143,92,255,0.12);
+    }
+
+    .pack-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .pack-icon {
+      width: 52px;
+      height: 52px;
+      display: grid;
+      place-items: center;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.045);
+      border: 1px solid var(--line);
+    }
+
+    .pack-icon img {
+      width: 42px;
+      height: 42px;
+      object-fit: contain;
+    }
+
+    .popular {
+      border-radius: 999px;
+      padding: 6px 9px;
+      color: #ddcffd;
+      background: rgba(143,92,255,0.14);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .pack-amount {
+      margin-top: 24px;
+      font-family: JetBrains Mono, monospace;
+      font-weight: 700;
+      font-size: 30px;
+      letter-spacing: -0.05em;
+    }
+
+    .pack-price {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .pack button {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 13px;
+      color: var(--text);
+      background: rgba(255,255,255,0.07);
+      font-weight: 800;
+    }
+
+    .pack.featured button {
+      background: linear-gradient(135deg, var(--purple), var(--purple-2));
+    }
+
+    .steps-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 42px;
+    }
+
+    .info-step {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      background: rgba(255,255,255,0.025);
+    }
+
+    .info-step b {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 14px;
+    }
+
+    .info-step span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .trust-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.9fr 0.9fr;
+      gap: 12px;
+    }
+
+    .trust-card {
+      min-height: 220px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 22px;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(143,92,255,0.12), transparent 38%),
+        linear-gradient(180deg, rgba(255,255,255,0.044), rgba(255,255,255,0.016));
+    }
+
+    .trust-card strong {
+      display: block;
+      margin-bottom: 12px;
+      font-size: 22px;
+      letter-spacing: -0.045em;
+    }
+
+    .trust-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .trust-card.feature {
+      background:
+        radial-gradient(circle at 88% 12%, rgba(39,232,244,0.14), transparent 34%),
+        radial-gradient(circle at 12% 0%, rgba(143,92,255,0.2), transparent 42%),
+        linear-gradient(180deg, rgba(143,92,255,0.11), rgba(255,255,255,0.02));
+      border-color: rgba(143,92,255,0.32);
+    }
+
+    .mono-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 24px;
+      font-family: JetBrains Mono, monospace;
+      font-size: 11px;
+      color: #d8d0eb;
+    }
+
+    .mono-list span {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(0,0,0,0.14);
+    }
+
+    .live-board {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.046), rgba(255,255,255,0.018));
+    }
+
+    .live-row {
+      display: grid;
+      grid-template-columns: 1fr 120px 110px 130px;
+      gap: 16px;
+      align-items: center;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .live-row:last-child {
+      border-bottom: 0;
+    }
+
+    .live-row b {
+      color: var(--text);
+      font-family: JetBrains Mono, monospace;
+      font-size: 13px;
+    }
+
+    .live-status {
+      justify-self: start;
+      border-radius: 999px;
+      padding: 6px 9px;
+      color: var(--green);
+      background: rgba(65,229,157,0.1);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .faq-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .faq-item {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 20px;
+      background: rgba(255,255,255,0.026);
+    }
+
+    .faq-item b {
+      display: block;
+      margin-bottom: 9px;
+      letter-spacing: -0.025em;
+    }
+
+    .faq-item p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .final-cta {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(143,92,255,0.34);
+      border-radius: 34px;
+      padding: 42px;
+      text-align: center;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(143,92,255,0.28), transparent 48%),
+        linear-gradient(180deg, rgba(143,92,255,0.12), rgba(255,255,255,0.018));
+      box-shadow: 0 28px 100px rgba(143,92,255,0.12);
+    }
+
+    .final-cta h2 {
+      margin: 0 auto 12px;
+      max-width: 720px;
+      font-size: clamp(34px, 5vw, 64px);
+      line-height: 0.94;
+      letter-spacing: -0.065em;
+    }
+
+    .final-cta p {
+      max-width: 560px;
+      margin: 0 auto 24px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      align-items: center;
+      padding: 34px 0 0;
+      color: var(--soft);
+      font-size: 12px;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1), transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: opacity, transform;
+    }
+
+    .reveal.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .reveal[data-delay="1"] {
+      transition-delay: 90ms;
+    }
+
+    .reveal[data-delay="2"] {
+      transition-delay: 180ms;
+    }
+
+    .reveal[data-delay="3"] {
+      transition-delay: 270ms;
+    }
+
+    .right-rail {
+      position: fixed;
+      z-index: 2;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: grid;
+      gap: 7px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(13,12,18,0.76);
+      backdrop-filter: blur(16px);
+    }
+
+    .rail-dot {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: var(--soft);
+      border: 1px solid transparent;
+      font-family: JetBrains Mono, monospace;
+      font-size: 10px;
+    }
+
+    .rail-dot.active {
+      color: #fff;
+      background: linear-gradient(135deg, var(--purple), var(--purple-2));
+      box-shadow: 0 0 24px rgba(143,92,255,0.46);
+    }
+
+    @media (max-width: 900px) {
+      .nav-links, .right-rail, .url-pill {
+        display: none;
+      }
+
+      .hero {
+        min-height: auto;
+        padding-top: 74px;
+      }
+
+      .mockup-body, .order-grid, .package-grid, .steps-strip, .trust-grid, .faq-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .section-head {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .live-row {
+        grid-template-columns: 1fr;
+        gap: 7px;
+      }
+
+      .footer {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .page {
+        width: min(100% - 20px, 1180px);
+      }
+
+      .nav {
+        border-radius: 18px;
+      }
+
+      .lang {
+        display: none;
+      }
+
+      h1 {
+        font-size: 54px;
+      }
+
+      .cta-row, .proof {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .metric-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="right-rail">
+    <div class="rail-dot active">01</div>
+    <div class="rail-dot">02</div>
+    <div class="rail-dot">03</div>
+    <div class="rail-dot">04</div>
+  </div>
+
+  <main class="page">
+    <nav class="nav">
+      <div class="brand">
+        <div class="brand-icon"><img src="./vbucks-icon.png" alt="" /></div>
+        Bag1V-Bucks
+      </div>
+      <div class="nav-links">
+        <a href="#how">Как работает</a>
+        <a href="#packages">Пакеты</a>
+        <a href="#trust">Гарантии</a>
+        <a href="#faq">FAQ</a>
+        <a href="#live">Выдачи</a>
+      </div>
+      <div class="nav-actions">
+        <div class="lang">RU</div>
+        <button class="login">Войти</button>
+      </div>
+    </nav>
+
+    <section class="hero reveal">
+      <div>
+        <div class="chip"><span class="chip-dot"></span>Автоматическая выдача через Epic Games</div>
+        <h1>V-Bucks <span class="accent-word">за минуты</span></h1>
+        <p class="subtitle">Выберите пакет, оплатите удобным способом и пройдите безопасную авторизацию Epic Games. Система сама подготовит заказ и покажет статус в реальном времени.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="#packages">Начать покупку</a>
+          <a class="btn btn-secondary" href="#how">Как это работает</a>
+        </div>
+        <div class="proof">
+          <span>5-15 мин выдача</span>
+          <span>Device Auth</span>
+          <span>СБП, карты, крипта</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="mockup-wrap reveal" data-delay="1">
+      <div class="mockup-glow"></div>
+      <div class="mockup">
+        <div class="window-bar">
+          <div class="dots"><i></i><i></i><i></i></div>
+          <div class="url-pill">bag1v-bucks.ru/order/VB-2418</div>
+          <div class="status-pill">LIVE</div>
+        </div>
+        <div class="mockup-body">
+          <aside class="sidebar">
+            <div class="side-title">ПОКУПКА</div>
+            <div class="side-item active"><span>Заказ</span><span class="side-badge">#2418</span></div>
+            <div class="side-item"><span>Оплата</span><span class="side-badge">02</span></div>
+            <div class="side-item"><span>Epic Auth</span><span class="side-badge">03</span></div>
+            <div class="side-item"><span>Выдача</span><span class="side-badge">04</span></div>
+          </aside>
+          <div class="content">
+            <div class="content-head">
+              <h2>Заказ готов к оплате</h2>
+              <div class="status-pill">Ожидает оплаты</div>
+            </div>
+            <div class="order-grid">
+              <div class="order-card">
+                <div class="order-main">
+                  <div class="coin-box"><img src="./vbucks-icon.png" alt="V-Bucks" /></div>
+                  <div>
+                    <div class="small-label">Выбранный пакет</div>
+                    <div class="amount">2 800 V-Bucks</div>
+                    <div class="price">1 699 ₽, фиксированная цена</div>
+                  </div>
+                </div>
+                <div class="metric-row">
+                  <div class="metric"><span class="small-label">Время</span><b>8 мин</b></div>
+                  <div class="metric"><span class="small-label">Статус</span><b>98%</b></div>
+                  <div class="metric"><span class="small-label">Регион</span><b>TR</b></div>
+                </div>
+              </div>
+              <div class="order-card timeline">
+                <div class="step"><span class="step-dot">✓</span><span>Пакет выбран</span><span class="step-time">сейчас</span></div>
+                <div class="step"><span class="step-dot">✓</span><span>Ссылка создана</span><span class="step-time">0:02</span></div>
+                <div class="step pending"><span class="step-dot"></span><span>Оплата заказа</span><span class="step-time">далее</span></div>
+                <div class="step pending"><span class="step-dot"></span><span>Авторизация Epic</span><span class="step-time">после</span></div>
+              </div>
+            </div>
+            <div class="chart">
+              <svg viewBox="0 0 600 104" preserveAspectRatio="none">
+                <path d="M0 76 C70 62 96 80 145 59 C190 38 218 70 272 50 C330 28 360 62 412 41 C466 18 502 47 600 22" fill="none" stroke="rgba(143,92,255,0.95)" stroke-width="3" />
+                <path d="M0 76 C70 62 96 80 145 59 C190 38 218 70 272 50 C330 28 360 62 412 41 C466 18 502 47 600 22 L600 104 L0 104 Z" fill="rgba(143,92,255,0.14)" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="packages reveal" id="packages">
+      <div class="section-head reveal">
+        <h2>Пакеты для быстрой покупки</h2>
+        <p>Визуально выделяем самый популярный пакет, а остальные оставляем компактными и понятными.</p>
+      </div>
+      <div class="package-grid">
+        <div class="pack featured reveal">
+          <div class="pack-top">
+            <div class="pack-icon"><img src="./vbucks-icon.png" alt="" /></div>
+            <div class="popular">Популярный</div>
+          </div>
+          <div class="pack-amount">2 800</div>
+          <div class="pack-price">1 699 ₽</div>
+          <button>Выбрать</button>
+        </div>
+        <div class="pack reveal" data-delay="1">
+          <div class="pack-top"><div class="pack-icon"><img src="./vbucks-icon.png" alt="" /></div></div>
+          <div class="pack-amount">1 000</div>
+          <div class="pack-price">649 ₽</div>
+          <button>Выбрать</button>
+        </div>
+        <div class="pack reveal" data-delay="2">
+          <div class="pack-top"><div class="pack-icon"><img src="./vbucks-icon.png" alt="" /></div></div>
+          <div class="pack-amount">5 000</div>
+          <div class="pack-price">2 899 ₽</div>
+          <button>Выбрать</button>
+        </div>
+        <div class="pack reveal">
+          <div class="pack-top"><div class="pack-icon"><img src="./vbucks-icon.png" alt="" /></div></div>
+          <div class="pack-amount">500</div>
+          <div class="pack-price">349 ₽</div>
+          <button>Выбрать</button>
+        </div>
+        <div class="pack reveal" data-delay="1">
+          <div class="pack-top"><div class="pack-icon"><img src="./vbucks-icon.png" alt="" /></div></div>
+          <div class="pack-amount">7 500</div>
+          <div class="pack-price">4 099 ₽</div>
+          <button>Выбрать</button>
+        </div>
+        <div class="pack reveal" data-delay="2">
+          <div class="pack-top"><div class="pack-icon"><img src="./vbucks-icon.png" alt="" /></div></div>
+          <div class="pack-amount">13 500</div>
+          <div class="pack-price">6 999 ₽</div>
+          <button>Выбрать</button>
+        </div>
+      </div>
+
+      <div class="steps-strip" id="how">
+        <div class="info-step reveal"><b>01. Выберите пакет</b><span>Показываем цену, количество V-Bucks и популярные варианты без перегруза.</span></div>
+        <div class="info-step reveal" data-delay="1"><b>02. Оплатите</b><span>После подключения шлюза здесь будет реальная оплата: СБП, карты или крипта.</span></div>
+        <div class="info-step reveal" data-delay="2"><b>03. Epic Auth</b><span>Безопасная авторизация через официальный Device Auth без хранения пароля.</span></div>
+        <div class="info-step reveal" data-delay="3"><b>04. Получите заказ</b><span>Система покажет живой статус обработки и завершение выдачи.</span></div>
+      </div>
+    </section>
+
+    <section class="section reveal" id="trust">
+      <div class="section-head">
+        <h2>Безопасность без лишних обещаний</h2>
+        <p>Показываем пользователю, что именно происходит с аккаунтом, оплатой и заказом.</p>
+      </div>
+      <div class="trust-grid">
+        <div class="trust-card feature reveal">
+          <strong>Device Auth вместо пароля</strong>
+          <p>Покупатель проходит авторизацию через официальный сценарий Epic Games. Пароль не сохраняется в сервисе, а статус заказа виден на отдельной странице.</p>
+          <div class="mono-list">
+            <span><em>password</em><b>не храним</b></span>
+            <span><em>order status</em><b>live</b></span>
+            <span><em>support</em><b>24/7</b></span>
+          </div>
+        </div>
+        <div class="trust-card reveal" data-delay="1">
+          <strong>Контроль оплаты</strong>
+          <p>После подключения платёжного шлюза заказ будет переходить к выдаче только после подтверждения оплаты вебхуком.</p>
+        </div>
+        <div class="trust-card reveal" data-delay="2">
+          <strong>Довыдача или возврат</strong>
+          <p>Если автоматическая обработка не прошла, заказ попадает в админку для повторной обработки или ручной проверки.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section reveal" id="live">
+      <div class="section-head">
+        <h2>Последние успешные выдачи</h2>
+        <p>Вместо шаблонных отзывов можно показать живую ленту заказов, она выглядит честнее и технологичнее.</p>
+      </div>
+      <div class="live-board reveal">
+        <div class="live-row"><b>#VB-2418</b><span>2 800 V-Bucks</span><span>8 минут</span><span class="live-status">Выдано</span></div>
+        <div class="live-row"><b>#VB-2417</b><span>1 000 V-Bucks</span><span>6 минут</span><span class="live-status">Выдано</span></div>
+        <div class="live-row"><b>#VB-2416</b><span>5 000 V-Bucks</span><span>12 минут</span><span class="live-status">Выдано</span></div>
+        <div class="live-row"><b>#VB-2415</b><span>13 500 V-Bucks</span><span>15 минут</span><span class="live-status">Выдано</span></div>
+      </div>
+    </section>
+
+    <section class="section reveal" id="faq">
+      <div class="section-head">
+        <h2>Вопросы перед покупкой</h2>
+        <p>Короткие ответы на то, что обычно волнует покупателя до оплаты.</p>
+      </div>
+      <div class="faq-grid">
+        <div class="faq-item reveal"><b>Как быстро придут V-Bucks?</b><p>Обычно 5-15 минут после оплаты и авторизации. Иногда обработка может занять дольше, если Epic Games временно ограничивает запросы.</p></div>
+        <div class="faq-item reveal" data-delay="1"><b>Нужно ли передавать пароль?</b><p>Нет. Сценарий строится вокруг Device Auth, пароль не должен сохраняться на стороне сервиса.</p></div>
+        <div class="faq-item reveal" data-delay="2"><b>Что если заказ завис?</b><p>Админка уже предусматривает повторную обработку неудачных заказов, поэтому оператор сможет перезапустить выдачу.</p></div>
+        <div class="faq-item reveal" data-delay="3"><b>Какие способы оплаты будут?</b><p>План: СБП, карты и возможно криптовалюта. Финальный список зависит от выбранного платёжного шлюза.</p></div>
+      </div>
+    </section>
+
+    <section class="section reveal">
+      <div class="final-cta">
+        <h2>Готовый путь от выбора пакета до выдачи</h2>
+        <p>Этот макет можно перенести в Next.js, подключить реальные пакеты из API и сохранить текущую логику создания заказа.</p>
+        <a class="btn btn-primary" href="#packages">Вернуться к пакетам</a>
+      </div>
+    </section>
+
+    <footer class="footer reveal">
+      <div class="brand">
+        <div class="brand-icon"><img src="./vbucks-icon.png" alt="" /></div>
+        Bag1V-Bucks
+      </div>
+      <div class="footer-links">
+        <a href="#">Политика</a>
+        <a href="#">Условия</a>
+        <a href="#">Telegram</a>
+        <a href="#">Поддержка</a>
+      </div>
+      <div>© 2026 Bag1V-Bucks</div>
+    </footer>
+  </main>
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.16,
+      rootMargin: '0px 0px -60px 0px',
+    });
+
+    document.querySelectorAll('.reveal').forEach((element) => observer.observe(element));
+  </script>
+</body>
+</html>

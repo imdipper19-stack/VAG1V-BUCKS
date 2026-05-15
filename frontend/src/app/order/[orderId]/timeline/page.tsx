@@ -13,6 +13,7 @@ interface TimelineLog {
 interface OrderStatus {
   orderId: string;
   status: string;
+  vbucksAmount?: number;
   timelineLogs: TimelineLog[];
   completedAt?: string;
   errorMessage?: string;
@@ -299,7 +300,7 @@ export default function TimelinePage({ params }: TimelinePageProps) {
 
           <h2 className="text-2xl font-bold mb-2">Заказ выполнен!</h2>
           <p className="text-sm" style={{ color: '#a1a1aa' }}>
-            2 800 V-Bucks успешно зачислены на ваш аккаунт Epic Games
+            {(orderStatus?.vbucksAmount || 800).toLocaleString('ru-RU')} V-Bucks успешно зачислены на ваш аккаунт Epic Games
           </p>
         </div>
       )}

@@ -1,0 +1,43 @@
+<svg width="720" height="920" viewBox="0 0 720 920" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="beam" x1="360" y1="0" x2="360" y2="920" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F7F5FF" stop-opacity="0"/>
+      <stop offset="0.18" stop-color="#27E8F4" stop-opacity="0.42"/>
+      <stop offset="0.48" stop-color="#8F5CFF" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#8F5CFF" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="core" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(360 278) rotate(90) scale(250 180)">
+      <stop stop-color="#F7F5FF" stop-opacity="0.84"/>
+      <stop offset="0.24" stop-color="#27E8F4" stop-opacity="0.58"/>
+      <stop offset="0.58" stop-color="#8F5CFF" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#8F5CFF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="portalGlow" x="-50%" y="-20%" width="200%" height="150%">
+      <feGaussianBlur stdDeviation="18" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.45 0 0 0 0 0.24 0 0 0 0 1 0 0 0 0.78 0"/>
+      <feBlend in="SourceGraphic"/>
+    </filter>
+    <filter id="sharpGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feBlend in="SourceGraphic" in2="blur" mode="screen"/>
+    </filter>
+  </defs>
+  <rect width="720" height="920" fill="transparent"/>
+  <g filter="url(#portalGlow)">
+    <path d="M306 64C432 142 486 274 456 416C438 504 464 584 532 688C438 652 362 578 328 486C288 380 206 292 148 230C232 236 294 176 306 64Z" fill="url(#beam)" opacity="0.6"/>
+    <path d="M412 36C356 122 336 218 364 324C390 422 374 524 292 668C430 554 520 420 506 286C498 204 462 120 412 36Z" fill="url(#beam)" opacity="0.5"/>
+    <ellipse cx="360" cy="278" rx="210" ry="280" fill="url(#core)" opacity="0.58"/>
+  </g>
+  <g filter="url(#sharpGlow)">
+    <path d="M356 42L416 178L376 280L458 376L342 650L378 432L286 322L338 194L356 42Z" stroke="#F7F5FF" stroke-opacity="0.72" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M316 94L250 236L304 354L250 518L326 428L346 310L304 226L316 94Z" stroke="#27E8F4" stroke-opacity="0.5" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M430 132L504 254L466 390L512 548L424 420L432 314L392 226L430 132Z" stroke="#8F5CFF" stroke-opacity="0.48" stroke-width="6" stroke-linejoin="round"/>
+  </g>
+  <g opacity="0.6">
+    <circle cx="236" cy="210" r="5" fill="#27E8F4"/>
+    <circle cx="486" cy="268" r="4" fill="#F7F5FF"/>
+    <circle cx="274" cy="452" r="3" fill="#8F5CFF"/>
+    <circle cx="456" cy="502" r="5" fill="#27E8F4"/>
+    <circle cx="378" cy="150" r="3" fill="#F7F5FF"/>
+  </g>
+</svg>

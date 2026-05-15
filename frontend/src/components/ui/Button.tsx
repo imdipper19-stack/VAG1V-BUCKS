@@ -1,7 +1,10 @@
+import React from 'react';
+
 interface ButtonProps {
   children: React.ReactNode;
   onClick?: () => void;
   className?: string;
+  style?: React.CSSProperties;
   variant?: 'primary' | 'secondary' | 'ghost';
   disabled?: boolean;
   type?: 'button' | 'submit';
@@ -11,6 +14,7 @@ export function Button({
   children,
   onClick,
   className = '',
+  style,
   variant = 'primary',
   disabled = false,
   type = 'button',
@@ -51,6 +55,7 @@ export function Button({
       type={type}
       onClick={onClick}
       disabled={disabled}
+      style={style}
       className={`${baseStyles} ${variants[variant]} ${className}`}
     >
       {children}
