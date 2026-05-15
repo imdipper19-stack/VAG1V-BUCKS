@@ -8,9 +8,9 @@ import VbucksIcon from '@/components/ui/VbucksIcon';
 
 const FALLBACK_PACKAGES: PublicPackage[] = [
   { vbucksAmount: 800,   priceRUB: 499,  popular: false },
-  { vbucksAmount: 2400,  priceRUB: 1399, popular: true  },
-  { vbucksAmount: 4500,  priceRUB: 2499, popular: false },
-  { vbucksAmount: 12500, priceRUB: 6499, popular: false },
+  { vbucksAmount: 2400,  priceRUB: 1199, popular: true  },
+  { vbucksAmount: 4500,  priceRUB: 1899, popular: false },
+  { vbucksAmount: 12500, priceRUB: 4499, popular: false },
 ];
 
 const STEPS = [

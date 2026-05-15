@@ -19,10 +19,10 @@ export interface VBucksPackageWithProfit extends VBucksPackage {
 }
 
 const BASE_PACKAGES: VBucksPackage[] = [
-  { vbucksAmount: 800,   priceRUB: 499,  wholesaleTRY: 120,  popular: false },
-  { vbucksAmount: 2400,  priceRUB: 1399, wholesaleTRY: 350,  popular: true  },
-  { vbucksAmount: 4500,  priceRUB: 2499, wholesaleTRY: 640,  popular: false },
-  { vbucksAmount: 12500, priceRUB: 6499, wholesaleTRY: 1650, popular: false },
+  { vbucksAmount: 800,   priceRUB: 499,  wholesaleTRY: 209,  popular: false },
+  { vbucksAmount: 2400,  priceRUB: 1199, wholesaleTRY: 534,  popular: true  },
+  { vbucksAmount: 4500,  priceRUB: 1899, wholesaleTRY: 858,  popular: false },
+  { vbucksAmount: 12500, priceRUB: 4499, wholesaleTRY: 2088, popular: false },
 ];
 
 @Injectable()

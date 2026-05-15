@@ -157,28 +157,36 @@ export default function AuthPage({ params }: AuthPageProps) {
                   </div>
                   <div>
                     <h3 className="font-semibold text-[15px]" style={{ color: '#f4f4f5' }}>
-                      Скопируйте код
+                      Скопируйте код авторизации
                     </h3>
                     <p className="text-xs mt-1" style={{ color: '#a1a1aa' }}>
-                      После входа Epic покажет JSON — скопируйте значение поля <b>authorizationCode</b>
+                      После входа вы увидите страницу с JSON-текстом. Найдите строку <b style={{ color: '#22c55e' }}>"authorizationCode"</b> и скопируйте <b style={{ color: '#22c55e' }}>только значение</b> (без кавычек).
                     </p>
                   </div>
                 </div>
                 <div
-                  className="text-xs font-mono p-3 rounded-lg"
+                  className="text-xs font-mono p-4 rounded-lg relative"
                   style={{
-                    background: 'rgba(0, 0, 0, 0.3)',
-                    color: '#71717a',
-                    lineHeight: 1.6,
+                    background: 'rgba(0, 0, 0, 0.4)',
+                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    lineHeight: 1.8,
                   }}
                 >
-                  {`{`}
+                  <span style={{ color: '#71717a' }}>{'{'}</span>
                   <br />
-                  &nbsp;&nbsp;<span style={{ color: '#8b5cf6' }}>"redirectUrl"</span>: <span style={{ color: '#22c55e' }}>"..."</span>,
+                  &nbsp;&nbsp;<span style={{ color: '#71717a' }}>"redirectUrl": "https://...",</span>
                   <br />
-                  &nbsp;&nbsp;<span style={{ color: '#8b5cf6' }}>"authorizationCode"</span>: <span style={{ color: '#eab308' }}>"a1b2c3..."</span> ← это
+                  &nbsp;&nbsp;<span style={{ color: '#71717a' }}>"authorizationCode": "</span><span style={{ color: '#22c55e', background: 'rgba(34, 197, 94, 0.15)', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>a1b2c3d4e5f6g7h8i9j0</span><span style={{ color: '#71717a' }}>"</span>
                   <br />
-                  {`}`}
+                  <span style={{ color: '#71717a' }}>{'}'}</span>
+                </div>
+                <div className="flex items-center gap-2 mt-3 px-1">
+                  <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-xs" style={{ color: '#22c55e' }}>
+                    Копируйте только зелёный текст — это и есть ваш код
+                  </span>
                 </div>
               </div>
 
