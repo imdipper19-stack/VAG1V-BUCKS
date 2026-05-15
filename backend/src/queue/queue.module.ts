@@ -39,7 +39,7 @@ import { ORDER_QUEUE_NAME } from './constants';
     }),
     forwardRef(() => OrdersModule),
     EpicModule,
-    CommonModule,
+    forwardRef(() => CommonModule),
     ProxyModule,
     RazerAccountModule,
     forwardRef(() => AuthModule),
