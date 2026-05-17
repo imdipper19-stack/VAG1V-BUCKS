@@ -28,48 +28,17 @@ const REAL_DURATION_SEC = 47;    // что показываем в таймер�
 interface FlowStep {
   id: string;
   title: string;
-  description: string;
   /** При какой реальной секунде шаг становится активным */
   startsAt: number;
   Icon: React.FC<{ className?: string }>;
 }
 
 const STEPS: FlowStep[] = [
-  {
-    id: 'order',
-    title: 'Заказ создан',
-    description: 'Покупатель выбрал пакет и нажал «Купить»',
-    startsAt: 0,
-    Icon: CartIcon,
-  },
-  {
-    id: 'payment',
-    title: 'Оплата принята',
-    description: 'СБП или карта — мгновенный webhook',
-    startsAt: 5,
-    Icon: CardIcon,
-  },
-  {
-    id: 'epic',
-    title: 'Epic авторизация',
-    description: 'Device Auth — без пароля и логина',
-    startsAt: 12,
-    Icon: ShieldIcon,
-  },
-  {
-    id: 'razer',
-    title: 'Razer покупка',
-    description: 'Турецкий кошелёк + 2FA автоматически',
-    startsAt: 28,
-    Icon: CoinIcon,
-  },
-  {
-    id: 'done',
-    title: 'V-Bucks доставлены',
-    description: 'Готово к использованию в Fortnite',
-    startsAt: 47,
-    Icon: CheckIcon,
-  },
+  { id: 'order',   title: 'Заказ создан',         startsAt: 0,  Icon: CartIcon },
+  { id: 'payment', title: 'Оплата принята',       startsAt: 5,  Icon: CardIcon },
+  { id: 'epic',    title: 'Epic авторизация',     startsAt: 12, Icon: ShieldIcon },
+  { id: 'razer',   title: 'Razer покупка',        startsAt: 28, Icon: CoinIcon },
+  { id: 'done',    title: 'V-Bucks доставлены',   startsAt: 47, Icon: CheckIcon },
 ];
 
 export default function PurchaseFlowDemo() {
@@ -198,7 +167,6 @@ export default function PurchaseFlowDemo() {
                 </div>
                 <div className="pfd-step-text">
                   <b>{step.title}</b>
-                  <span>{step.description}</span>
                 </div>
               </li>
             );
@@ -410,7 +378,6 @@ export default function PurchaseFlowDemo() {
           display: flex;
           flex-direction: column;
           gap: 4px;
-          min-height: 48px;
         }
         .pfd-step-text b {
           font-size: 13px;
@@ -418,11 +385,6 @@ export default function PurchaseFlowDemo() {
           color: #f4f4f5;
           letter-spacing: -.01em;
           transition: color .3s;
-        }
-        .pfd-step-text span {
-          font-size: 12px;
-          color: #71717a;
-          line-height: 1.45;
         }
         .pfd-step-active .pfd-step-text b { color: #ffffff; }
         .pfd-step-done .pfd-step-text b { color: #22c55e; }
