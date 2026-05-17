@@ -468,7 +468,7 @@ export default function LandingPage() {
 
       <style jsx global>{`
 .status-row{display:flex;align-items:center;gap:6px;margin-top:2px}
-.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:1px}
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .status-green{background:#22c55e;box-shadow:0 0 8px rgba(34,197,94,.8);animation:statusPulse 2s ease-in-out infinite}
 .status-yellow{background:#eab308;box-shadow:0 0 8px rgba(234,179,8,.8);animation:statusPulse 1.5s ease-in-out infinite}
 .status-red{background:#ef4444;box-shadow:0 0 8px rgba(239,68,68,.8);animation:statusPulse 1s ease-in-out infinite}
