@@ -230,11 +230,11 @@ export default function RazerAccountManagement() {
 
   const getTrustLabel = (trust?: string) => {
     switch (trust) {
-      case 'trusted': return '⭐ Trusted';
-      case 'ready': return '✅ Ready';
-      case 'warming': return '🔥 Warming';
-      case 'new': return '🆕 New';
-      default: return '';
+      case 'trusted': return 'Trusted';
+      case 'ready':   return 'Ready';
+      case 'warming': return 'Warming';
+      case 'new':     return 'New';
+      default:        return '';
     }
   };
 
@@ -316,8 +316,12 @@ export default function RazerAccountManagement() {
 
             {/* TOTP Secret для 2FA */}
             <div className="rounded-lg border border-amber-500/30 p-4" style={{ background: 'rgba(245,158,11,.05)' }}>
-              <label className="block text-sm font-medium mb-2" style={{ color: '#f59e0b' }}>
-                🔐 TOTP Secret (если включена 2FA на Razer)
+              <label className="block text-sm font-medium mb-2 inline-flex items-center gap-1.5" style={{ color: '#f59e0b' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                TOTP Secret (если включена 2FA на Razer)
               </label>
               <input
                 type="text"

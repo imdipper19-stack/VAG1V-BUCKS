@@ -586,7 +586,16 @@ export default function AdminPage() {
               className="px-6 py-3 rounded-xl font-semibold text-sm transition-all disabled:opacity-50"
               style={{ background: 'rgba(234,179,8,.2)', border: '1px solid rgba(234,179,8,.4)', color: '#eab308' }}
             >
-              {testOrderLoading ? 'Создаём...' : '⚡ Создать тестовый заказ'}
+              {testOrderLoading ? (
+                'Создаём...'
+              ) : (
+                <span className="inline-flex items-center gap-2">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M13 2L3 14h7l-1 8 11-14h-7l1-6z" />
+                  </svg>
+                  Создать тестовый заказ
+                </span>
+              )}
             </button>
           </div>
 
