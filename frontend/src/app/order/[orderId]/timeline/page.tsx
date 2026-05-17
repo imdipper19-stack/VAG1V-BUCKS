@@ -10,11 +10,61 @@ interface TimelinePageProps {
   };
 }
 
+/**
+ * Минималистичные line-icon SVG для шагов timeline.
+ * Стиль: 24x24, stroke-current 2px, без заливки — наследуют currentColor от родителя.
+ */
+function ShieldCheckIcon() {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2L4 5v7c0 5 3.5 9 8 10 4.5-1 8-5 8-10V5l-8-3z" />
+      <path d="M9 12l2 2 4-4" />
+    </svg>
+  );
+}
+
+function WalletIcon() {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 7h15a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
+      <path d="M3 7l3-4h12l2 4" />
+      <circle cx="16" cy="13" r="1.5" />
+    </svg>
+  );
+}
+
+function VBucksIcon() {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8 8l4 8 4-8" />
+    </svg>
+  );
+}
+
+function SparklesIcon() {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" />
+    </svg>
+  );
+}
+
+function WarningIcon() {
+  return (
+    <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3l10 18H2L12 3z" />
+      <path d="M12 10v5" />
+      <circle cx="12" cy="18" r="0.5" fill="currentColor" />
+    </svg>
+  );
+}
+
 const STEPS = [
-  { id: 'auth', title: 'Авторизация подтверждена', icon: '🔐' },
-  { id: 'balance', title: 'Подготовка к покупке', icon: '💳' },
-  { id: 'purchase', title: 'Покупка V-Bucks', icon: '🎮' },
-  { id: 'delivery', title: 'Зачисление на аккаунт', icon: '✨' },
+  { id: 'auth', title: 'Авторизация подтверждена', Icon: ShieldCheckIcon },
+  { id: 'balance', title: 'Подготовка к покупке', Icon: WalletIcon },
+  { id: 'purchase', title: 'Покупка V-Bucks', Icon: VBucksIcon },
+  { id: 'delivery', title: 'Зачисление на аккаунт', Icon: SparklesIcon },
 ];
 
 function getCompletedSteps(status: string, logsCount: number): number {
@@ -147,8 +197,17 @@ export default function TimelinePage({ params }: TimelinePageProps) {
               <div className="w-px h-8" style={{ background: 'rgba(255,255,255,0.08)' }} />
               <div className="text-center">
                 <span className="block text-xs" style={{ color: '#71717a' }}>Ваше место</span>
-                <span className="block text-lg font-bold font-mono" style={{ color: queueInfo.position === 0 ? '#22c55e' : '#8b5cf6' }}>
-                  {queueInfo.position === 0 ? '⚡ Сейчас' : `#${queueInfo.position}`}
+                <span className="text-lg font-bold font-mono inline-flex items-center gap-1.5" style={{ color: queueInfo.position === 0 ? '#22c55e' : '#8b5cf6' }}>
+                  {queueInfo.position === 0 ? (
+                    <>
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M13 2L3 14h7l-1 8 11-14h-7l1-6z" />
+                      </svg>
+                      Сейчас
+                    </>
+                  ) : (
+                    `#${queueInfo.position}`
+                  )}
                 </span>
               </div>
             </>
@@ -206,7 +265,9 @@ export default function TimelinePage({ params }: TimelinePageProps) {
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 )}
                 {isWaiting && (
-                  <span className="text-lg opacity-40">{step.icon}</span>
+                  <span className="opacity-40" style={{ color: '#71717a' }}>
+                    <step.Icon />
+                  </span>
                 )}
               </div>
 
@@ -283,9 +344,9 @@ export default function TimelinePage({ params }: TimelinePageProps) {
         >
           <div
             className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-            style={{ background: 'rgba(239, 68, 68, 0.2)' }}
+            style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}
           >
-            <span className="text-3xl">⚠️</span>
+            <WarningIcon />
           </div>
           <h2 className="text-xl font-bold mb-1" style={{ color: '#ef4444' }}>
             Произошла ошибка

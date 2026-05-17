@@ -219,6 +219,8 @@ export class OrdersController {
         orderId: order.orderId,
         status: order.status,
         paymentStatus: order.paymentStatus,
+        vbucksAmount: order.vbucksAmount,
+        priceTRY: order.priceTRY,
         timelineLogs: order.timelineLogs,
         completedAt: order.completedAt,
         errorMessage: order.errorMessage,

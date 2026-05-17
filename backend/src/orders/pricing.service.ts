@@ -18,11 +18,25 @@ export interface VBucksPackageWithProfit extends VBucksPackage {
   marginPercent: number;
 }
 
+/**
+ * Базовые пакеты V-Bucks. Offer ID берутся в EpicApiPurchaseService из VBUCKS_OFFERS —
+ * номиналы здесь должны точно совпадать с ключами там. Расхождение = `package_not_found`.
+ *
+ * В Fortnite Store есть ровно 4 базовых постоянных пакета: 800 / 2400 / 4500 / 12500.
+ *
+ * priceRUB — продажа покупателю. Цены подобраны исходя из реальных Razer Gold TRY:
+ *   800   = 190 TRY   ≈ 310 RUB себестоимость → 499 RUB продажа (≈38% маржа)
+ *   2400  = 485 TRY   ≈ 791 RUB себестоимость → 1199 RUB продажа (≈34% маржа)
+ *   4500  = 780 TRY   ≈ 1271 RUB себестоимость → 1899 RUB продажа (≈33% маржа)
+ *   12500 = 1898 TRY  ≈ 3094 RUB себестоимость → 4499 RUB продажа (≈31% маржа)
+ *
+ * wholesaleTRY — закупочная цена в Razer Gold. Маржа в RUB считается через PRICING_TRY_TO_RUB.
+ */
 const BASE_PACKAGES: VBucksPackage[] = [
-  { vbucksAmount: 800,   priceRUB: 499,  wholesaleTRY: 209,  popular: false },
-  { vbucksAmount: 2400,  priceRUB: 1199, wholesaleTRY: 534,  popular: true  },
-  { vbucksAmount: 4500,  priceRUB: 1899, wholesaleTRY: 858,  popular: false },
-  { vbucksAmount: 12500, priceRUB: 4499, wholesaleTRY: 2088, popular: false },
+  { vbucksAmount: 800,   priceRUB: 499,  wholesaleTRY: 190,  popular: false },
+  { vbucksAmount: 2400,  priceRUB: 1199, wholesaleTRY: 485,  popular: true  },
+  { vbucksAmount: 4500,  priceRUB: 1899, wholesaleTRY: 780,  popular: false },
+  { vbucksAmount: 12500, priceRUB: 4499, wholesaleTRY: 1898, popular: false },
 ];
 
 @Injectable()

@@ -17,12 +17,27 @@ import axios from 'axios';
 import { CaptchaSolverService } from '../captcha/captcha-solver.service';
 import { BrowserPool } from './browser-pool.service';
 
+/**
+ * Реальные offer ID Fortnite Store для пакетов V-Bucks (namespace 'fn').
+ *
+ * ⚠️  ВАЖНО: offer ID привязаны к конкретному региону/sandbox. Ниже — TR-region IDs.
+ * Если Epic поменяет каталог — заказы упадут с `confirm_failed`. Перепроверять можно
+ * через UI: открыть store.epicgames.com/purchase?offers=1-fn-{id}-- и видим ли пакет.
+ *
+ * Текущее покрытие:
+ *   800   ✅ проверено реальной покупкой (см. captured dump)
+ *   2400  ❌ TODO: нужно захватить offer ID при покупке этого пакета
+ *   4500  ❌ TODO: нужно захватить offer ID при покупке этого пакета
+ *   12500 ❌ TODO: нужно захватить offer ID при покупке этого пакета
+ *
+ * Пока offer ID не известны, эти пакеты вернут `package_not_found` сразу
+ * на старте, не доходя до Razer.
+ */
 const VBUCKS_OFFERS: Record<number, string> = {
   800: '90ef336a7c434257bde376b3d3c105ca',
-  1000: 'dae36629ab90482f94a6f57711b0ea7a',
-  2800: '8bd6fab03bb74c6594322ef2d35b8d2a',
-  5000: '0938e28d19bf4fcd83531c0a02f8eed5',
-  13500: '09176f4ff7564bbbb499bbe20bd6348f',
+  // 2400:  '...',
+  // 4500:  '...',
+  // 12500: '...',
 };
 
 const PAYMENT_API = 'https://payment-website-pci.ol.epicgames.com';
@@ -84,7 +99,11 @@ export class EpicApiPurchaseService implements OnModuleInit {
 
     const offerId = VBUCKS_OFFERS[vbucksAmount];
     if (!offerId) {
-      return this.fail('package_not_found', `No offer ID for ${vbucksAmount} V-Bucks`);
+      this.logger.error(
+        `[API] No offer ID configured for ${vbucksAmount} V-Bucks. ` +
+        `Add it to VBUCKS_OFFERS in epic-api-purchase.service.ts (capture from store.epicgames.com/purchase?offers=1-fn-{id}--)`,
+      );
+      return this.fail('package_not_found', `Пакет ${vbucksAmount} V-Bucks временно недоступен`);
     }
 
     let browser: Browser | null = null;
