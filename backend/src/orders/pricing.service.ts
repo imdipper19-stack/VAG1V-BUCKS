@@ -10,6 +10,8 @@ export interface VBucksPackage {
   priceRUB: number;
   wholesaleTRY: number;
   popular: boolean;
+  /** true = пакет не показывается на лендинге, доступен только в админке (для тестов / служебных заказов). */
+  internal?: boolean;
 }
 
 export interface VBucksPackageWithProfit extends VBucksPackage {
@@ -22,9 +24,11 @@ export interface VBucksPackageWithProfit extends VBucksPackage {
  * Базовые пакеты V-Bucks. Offer ID берутся в EpicApiPurchaseService из VBUCKS_OFFERS —
  * номиналы здесь должны точно совпадать с ключами там. Расхождение = `package_not_found`.
  *
- * В Fortnite Store есть ровно 4 базовых постоянных пакета: 800 / 2400 / 4500 / 12500.
+ * В Fortnite Store есть ровно 4 публичных постоянных пакета: 800 / 2400 / 4500 / 12500.
+ * Плюс служебный 100 V-Bucks для дешёвых тестов закупки.
  *
  * priceRUB — продажа покупателю. Цены подобраны исходя из реальных Razer Gold TRY:
+ *   100   = ~25 TRY   ≈ 41 RUB себестоимость → 99 RUB (тестовый, не публикуем)
  *   800   = 190 TRY   ≈ 310 RUB себестоимость → 499 RUB продажа (≈38% маржа)
  *   2400  = 485 TRY   ≈ 791 RUB себестоимость → 1199 RUB продажа (≈34% маржа)
  *   4500  = 780 TRY   ≈ 1271 RUB себестоимость → 1899 RUB продажа (≈33% маржа)
@@ -33,6 +37,7 @@ export interface VBucksPackageWithProfit extends VBucksPackage {
  * wholesaleTRY — закупочная цена в Razer Gold. Маржа в RUB считается через PRICING_TRY_TO_RUB.
  */
 const BASE_PACKAGES: VBucksPackage[] = [
+  { vbucksAmount: 100,   priceRUB: 99,   wholesaleTRY: 25,   popular: false, internal: true },
   { vbucksAmount: 800,   priceRUB: 499,  wholesaleTRY: 190,  popular: false },
   { vbucksAmount: 2400,  priceRUB: 1199, wholesaleTRY: 485,  popular: true  },
   { vbucksAmount: 4500,  priceRUB: 1899, wholesaleTRY: 780,  popular: false },
@@ -49,16 +54,19 @@ export class PricingService {
     this.tryToRub = Number.isFinite(parsed) && parsed > 0 ? parsed : 1.63;
   }
 
-  /** Публичный список пакетов — без себестоимости, для лендинга/страницы покупателя. */
-  listPublic(): Array<Omit<VBucksPackage, 'wholesaleTRY'>> {
-    return BASE_PACKAGES.map(({ vbucksAmount, priceRUB, popular }) => ({
-      vbucksAmount,
-      priceRUB,
-      popular,
-    }));
+  /** Публичный список пакетов — без себестоимости и без internal-пакетов, для лендинга/страницы покупателя. */
+  listPublic(): Array<Omit<VBucksPackage, 'wholesaleTRY' | 'internal'>> {
+    return BASE_PACKAGES
+      .filter((p) => !p.internal)
+      .map(({ vbucksAmount, priceRUB, popular }) => ({
+        vbucksAmount,
+        priceRUB,
+        popular,
+      }));
   }
 
-  /** Полный список с прибылью — только для админки (защищается AdminAuthGuard). */
+  /** Полный список с прибылью — только для админки (защищается AdminAuthGuard).
+   *  Включает internal-пакеты (типа тестового 100 V-Bucks). */
   listWithProfit(): VBucksPackageWithProfit[] {
     return BASE_PACKAGES.map((p) => this.withProfit(p));
   }

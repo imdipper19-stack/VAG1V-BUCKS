@@ -17,27 +17,14 @@ import axios from 'axios';
 import { CaptchaSolverService } from '../captcha/captcha-solver.service';
 import { BrowserPool } from './browser-pool.service';
 
-/**
- * Реальные offer ID Fortnite Store для пакетов V-Bucks (namespace 'fn').
- *
- * ⚠️  ВАЖНО: offer ID привязаны к конкретному региону/sandbox. Ниже — TR-region IDs.
- * Если Epic поменяет каталог — заказы упадут с `confirm_failed`. Перепроверять можно
- * через UI: открыть store.epicgames.com/purchase?offers=1-fn-{id}-- и видим ли пакет.
- *
- * Текущее покрытие:
- *   800   ✅ проверено реальной покупкой (см. captured dump)
- *   2400  ❌ TODO: нужно захватить offer ID при покупке этого пакета
- *   4500  ❌ TODO: нужно захватить offer ID при покупке этого пакета
- *   12500 ❌ TODO: нужно захватить offer ID при покупке этого пакета
- *
- * Пока offer ID не известны, эти пакеты вернут `package_not_found` сразу
- * на старте, не доходя до Razer.
- */
 const VBUCKS_OFFERS: Record<number, string> = {
+  // Публичные пакеты Fortnite Store (TR-region)
   800: '90ef336a7c434257bde376b3d3c105ca',
-  // 2400:  '...',
-  // 4500:  '...',
-  // 12500: '...',
+  2400: 'c17e10ee37144215b9b2fae74b99c288',
+  4500: '40a7551407f54170ae12adcf01934d1a',
+  12500: '0938e28d19bf4fcd83531c0a02f8eed5',
+  // Внутренний тестовый пакет (НЕ показывается на лендинге, доступен только через админку)
+  100: '48a61f0d493942909a529369a66f803b',
 };
 
 const PAYMENT_API = 'https://payment-website-pci.ol.epicgames.com';
