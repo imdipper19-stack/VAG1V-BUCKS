@@ -1,0 +1,5 @@
+# Captured data contains tokens and sensitive info — never commit!
+captured-requests.json
+captured-critical.json
+captured-summary.txt
+*.cookies.json

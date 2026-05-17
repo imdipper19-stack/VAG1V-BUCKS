@@ -1,6 +1,15 @@
 node_modules
 dist
 .env
+.env.local
 .git
+.gitignore
 *.md
-.DS_Store
+screenshots/*.png
+screenshots/*.html
+src/api-capture/captured-*.json
+*.log
+coverage
+.vscode
+.idea
+test

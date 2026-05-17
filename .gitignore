@@ -47,4 +47,17 @@ backend/node_modules/
 # Frontend
 frontend/.next/
 frontend/node_modules/
+
+# Diagnostics & temp scripts (НЕ коммитим — могут содержать cookies/токены/PII)
+backend/screenshots/
+backend/analyze-*.js
+backend/purchase-checkout.js
+backend/razer-analysis.txt
+backend/razer-order-page.html
+backend/run-*.ps1
+backend/probe-*.mjs
+
+# Internal dev notes (могут содержать креды для тестов — никогда не пушим)
+backend/src/api-purchase/HANDOFF.md
+HANDOFF.md
 frontend/out/

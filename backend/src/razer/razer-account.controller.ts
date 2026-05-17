@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, HttpCode, HttpStatus } from '@nestjs/common';
 import { RazerAccountService } from './razer-account.service';
+import { RazerBalanceMonitorService } from './razer-balance-monitor.service';
 import { EpicBrowserService } from '../epic/epic-browser.service';
 import { RazerAccountStatus } from '../database/entities';
 
@@ -8,6 +9,7 @@ export class RazerAccountController {
   constructor(
     private readonly razerAccountService: RazerAccountService,
     private readonly epicBrowserService: EpicBrowserService,
+    private readonly balanceMonitor: RazerBalanceMonitorService,
   ) {}
 
   @Post()
@@ -20,6 +22,18 @@ export class RazerAccountController {
     totpSecret?: string;
   }) {
     const account = await this.razerAccountService.createAccount(body);
+
+    // Фоновое первичное обновление баланса. Не блокируем POST — пользователь сразу
+    // получает ответ, баланс подтянется через ~10-25 секунд (зависит от Razer).
+    // Если у аккаунта нет ни email/password, ни cookies — refreshOne сам отдаст
+    // success:false и просто логирует, никаких эффектов.
+    this.balanceMonitor
+      .refreshOne(account.id)
+      .catch((err) =>
+        // Не критично если упало — cron обновит через 30 минут.
+        console.warn(`[razer-accounts] initial balance refresh failed for ${account.username}: ${err.message}`),
+      );
+
     return {
       success: true,
       data: account,
@@ -53,6 +67,38 @@ export class RazerAccountController {
     return {
       success: true,
       data: accounts,
+    };
+  }
+
+  /**
+   * Триггер ручного обновления балансов всех ACTIVE / LOW_BALANCE аккаунтов.
+   * Cron делает то же самое каждые 30 минут автоматически — этот endpoint полезен
+   * после массовой подмены cookies или при подозрении на устаревшие данные.
+   *
+   * Body: пусто.
+   * Response: { total, updated, failed, skipped }
+   */
+  @Post('refresh-balances')
+  @HttpCode(HttpStatus.OK)
+  async refreshAllBalances() {
+    const stats = await this.balanceMonitor.refreshAllBalances();
+    return {
+      success: true,
+      data: stats,
+    };
+  }
+
+  /**
+   * Триггер обновления баланса одного аккаунта.
+   * Заменяет старый POST :id/validate-cookies — делает то же самое + красивый ответ.
+   */
+  @Post(':id/refresh-balance')
+  @HttpCode(HttpStatus.OK)
+  async refreshOneBalance(@Param('id') id: string) {
+    const result = await this.balanceMonitor.refreshOne(id);
+    return {
+      success: result.success,
+      data: result,
     };
   }
 
@@ -119,8 +165,11 @@ export class RazerAccountController {
   }
 
   /**
-   * Сохранить куки сессии Razer Gold для аккаунта
-   * Куки можно экспортировать из браузера через расширение "EditThisCookie" или "Cookie-Editor"
+   * Сохранить куки сессии Razer Gold для аккаунта.
+   * Куки можно экспортировать из браузера через расширение "EditThisCookie" или "Cookie-Editor".
+   *
+   * Сразу после сохранения автоматически запускается фоновое обновление баланса —
+   * через ~15-30 секунд карточка аккаунта в админке покажет свежий баланс TRY.
    */
   @Put(':id/cookies')
   @HttpCode(HttpStatus.OK)
@@ -146,9 +195,18 @@ export class RazerAccountController {
       sessionCookies: body.cookies,
     } as any);
 
+    // Фоновое обновление баланса с новыми cookies
+    if (account) {
+      this.balanceMonitor
+        .refreshOne(account.id)
+        .catch((err) =>
+          console.warn(`[razer-accounts] post-cookies refresh failed for ${account.username}: ${err.message}`),
+        );
+    }
+
     return {
       success: true,
-      data: { message: 'Cookies saved successfully', id: account?.id },
+      data: { message: 'Cookies saved successfully — balance refreshing in background', id: account?.id },
     };
   }
 

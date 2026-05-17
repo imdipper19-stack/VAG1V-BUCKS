@@ -1,7 +1,19 @@
 version: '3.8'
 
+# Production-compose. Развёртывание:
+#   1. cd /opt/bag1v-bucks && git pull
+#   2. docker compose build
+#   3. docker compose --profile production up -d
+#
+# Размеры памяти подобраны под VPS 4 vCPU / 8 GB:
+#   postgres:  512 MB
+#   redis:     128 MB
+#   backend:   2 GB (включая 3 Chromium инстанса по ~400 MB)
+#   frontend:  512 MB
+#   nginx:     128 MB
+#   ── всего ~3.3 GB, остаётся ~4.7 GB запаса
+
 services:
-  # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
     container_name: bag1vbucks-postgres
@@ -14,13 +26,13 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
+    mem_limit: 512m
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Redis (BullMQ queue)
   redis:
     image: redis:7-alpine
     container_name: bag1vbucks-redis
@@ -29,13 +41,13 @@ services:
     volumes:
       - redis_data:/data
     restart: unless-stopped
+    mem_limit: 128m
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Backend (NestJS)
   backend:
     build:
       context: ./backend
@@ -51,19 +63,34 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       NODE_ENV: production
+      # На проде Chromium всегда headless (нет X-сервера)
+      API_PURCHASE_HEADLESS: "true"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     restart: unless-stopped
+    # /dev/shm для Chromium: 64 MB по умолчанию не хватает для 3 инстансов из BrowserPool —
+    # появляются "Target closed" / "Page crashed" ошибки в Cloudflare-проверках.
+    shm_size: 2gb
+    mem_limit: 2g
+    volumes:
+      # Сохраняем диагностические скриншоты при фейлах (no_session_token, razer_no_otp, etc).
+      # Без этого volume они теряются при перезапуске контейнера.
+      - ./backend/screenshots:/app/screenshots
     dns:
       - 8.8.8.8
-      - 8.8.4.4
+      - 1.1.1.1
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/api/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
-  # Frontend (Next.js)
   frontend:
     build:
       context: ./frontend
@@ -76,10 +103,11 @@ services:
     environment:
       NODE_ENV: production
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     restart: unless-stopped
+    mem_limit: 512m
 
-  # Nginx (reverse proxy, production only)
   nginx:
     image: nginx:alpine
     container_name: bag1vbucks-nginx
@@ -93,6 +121,7 @@ services:
       - frontend
       - backend
     restart: unless-stopped
+    mem_limit: 128m
     profiles:
       - production
 

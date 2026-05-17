@@ -129,6 +129,25 @@ export const authApi = {
     const response = await api.post('/auth/region-code', { orderId, code });
     return response.data;
   },
+
+  /**
+   * Начинает Epic Device Authorization Flow.
+   * Возвращает короткий userCode (типа JXQ7R8I) и URL для активации.
+   */
+  deviceStart: async (orderId: string) => {
+    const response = await api.post('/auth/device/start', { orderId });
+    return response.data;
+  },
+
+  /**
+   * Поллится фронтом каждые ~5 сек.
+   * status: 'pending' пока юзер не подтвердил, 'authorized' когда токены получены
+   * (бэкенд автоматически ставит заказ в очередь).
+   */
+  devicePoll: async (orderId: string, deviceCode: string) => {
+    const response = await api.post('/auth/device/poll', { orderId, deviceCode });
+    return response.data;
+  },
 };
 
 // Admin Auth API

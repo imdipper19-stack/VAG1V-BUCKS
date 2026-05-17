@@ -9,10 +9,10 @@ const jetbrainsMono = JetBrains_Mono({ subsets: ['latin', 'cyrillic'], variable:
 
 export const metadata: Metadata = {
   title: {
-    default: 'Bag1V-Bucks — Купить V-Bucks дёшево | Автоматическая выдача за 5-15 минут',
+    default: 'Bag1V-Bucks — Купить V-Bucks дёшево | Автоматическая выдача меньше чем за минуту',
     template: '%s | Bag1V-Bucks',
   },
-  description: 'Купить V-Bucks для Fortnite по выгодной цене. Автоматическая выдача через Epic Games за 5-15 минут. Безопасная авторизация Device Auth, без пароля. Оплата СБП, картой.',
+  description: 'Купить V-Bucks для Fortnite по выгодной цене. Автоматическая выдача через Epic Games меньше чем за минуту. Безопасная авторизация Device Auth, без пароля. Оплата СБП, картой.',
   keywords: ['V-Bucks', 'купить V-Bucks', 'В-Баксы', 'Fortnite', 'вбаксы дёшево', 'V-Bucks дёшево', 'купить вбаксы', 'Fortnite V-Bucks', 'пополнение V-Bucks'],
   authors: [{ name: 'Bag1V-Bucks' }],
   creator: 'Bag1V-Bucks',
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     locale: 'ru_RU',
     url: 'https://bag1v-bucks.shop',
     siteName: 'Bag1V-Bucks',
-    title: 'Bag1V-Bucks — Купить V-Bucks дёшево за 5-15 минут',
+    title: 'Bag1V-Bucks — Купить V-Bucks дёшево меньше чем за минуту',
     description: 'Автоматическая выдача V-Bucks через Epic Games. Безопасно, быстро, без пароля. Оплата СБП и картой.',
     images: [
       {
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Bag1V-Bucks — V-Bucks за 5-15 минут',
+    title: 'Bag1V-Bucks — V-Bucks меньше чем за минуту',
     description: 'Купить V-Bucks дёшево с автоматической выдачей. Безопасная авторизация через Epic Games.',
     images: ['/og-image.png'],
   },

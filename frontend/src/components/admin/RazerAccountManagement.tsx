@@ -81,6 +81,29 @@ export default function RazerAccountManagement() {
   useEffect(() => {
     fetchAccounts();
     fetchStats();
+
+    // Авто-полл каждые 30 секунд: подтягивает свежие балансы из БД
+    // (бэкенд их обновляет cron'ом каждые 30 минут + после createAccount/saveCookies/orderSuccess).
+    // Без этого страница показывает данные на момент открытия.
+    const interval = setInterval(() => {
+      fetchAccounts();
+      fetchStats();
+    }, 30_000);
+
+    // Также рефрешим когда вкладка возвращается в фокус — типичный кейс:
+    // юзер вернулся в админку через час после Razer-обновлений.
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchAccounts();
+        fetchStats();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, [fetchAccounts, fetchStats]);
 
   const handleAddAccount = async (e: React.FormEvent) => {

@@ -5,12 +5,11 @@ import { OrderProcessor } from './order.processor';
 import { OrderProcessingService } from './order-processing.service';
 import { QueueService } from './queue.service';
 import { OrderEventBus } from './order-event-bus.service';
-import { EpicModule } from '../epic/epic.module';
 import { OrdersModule } from '../orders/orders.module';
 import { CommonModule } from '../common/common.module';
-import { AuthModule } from '../auth/auth.module';
 import { ProxyModule } from '../proxy/proxy.module';
 import { RazerAccountModule } from '../razer/razer-account.module';
+import { ApiPurchaseModule } from '../api-purchase/api-purchase.module';
 import { ORDER_QUEUE_NAME } from './constants';
 
 @Module({
@@ -38,11 +37,10 @@ import { ORDER_QUEUE_NAME } from './constants';
       },
     }),
     forwardRef(() => OrdersModule),
-    EpicModule,
     forwardRef(() => CommonModule),
     ProxyModule,
     RazerAccountModule,
-    forwardRef(() => AuthModule),
+    ApiPurchaseModule,
   ],
   providers: [OrderProcessor, OrderProcessingService, QueueService, OrderEventBus],
   exports: [BullModule, QueueService, OrderEventBus],

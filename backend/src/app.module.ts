@@ -13,6 +13,8 @@ import { RazerAccountModule } from './razer/razer-account.module';
 import { SettingsModule } from './settings/settings.module';
 import { SecurityModule } from './security/security.module';
 import { CaptchaModule } from './captcha/captcha.module';
+import { ApiPurchaseModule } from './api-purchase/api-purchase.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -33,6 +35,8 @@ import { CaptchaModule } from './captcha/captcha.module';
     SettingsModule,
     SecurityModule,
     CaptchaModule,
+    ApiPurchaseModule,
+    HealthModule,
   ],
 })
 export class AppModule {}

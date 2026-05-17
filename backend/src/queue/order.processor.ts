@@ -8,12 +8,15 @@ export interface ProcessOrderJobData {
   orderId: string;
 }
 
-@Processor(ORDER_QUEUE_NAME)
+const ORDER_CONCURRENCY = Math.max(1, parseInt(process.env.ORDER_CONCURRENCY || '3', 10));
+
+@Processor(ORDER_QUEUE_NAME, { concurrency: ORDER_CONCURRENCY })
 export class OrderProcessor extends WorkerHost {
   private readonly logger = new Logger(OrderProcessor.name);
 
   constructor(private readonly orderProcessingService: OrderProcessingService) {
     super();
+    this.logger.log(`OrderProcessor started with concurrency=${ORDER_CONCURRENCY}`);
   }
 
   async process(job: Job<ProcessOrderJobData>): Promise<void> {

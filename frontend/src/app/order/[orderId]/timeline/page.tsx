@@ -1,4 +1,4 @@
-'use client';
+По'use client';
 
 import { useEffect, useState } from 'react';
 import { ordersApi } from '@/lib/api';
