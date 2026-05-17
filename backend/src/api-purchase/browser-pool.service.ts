@@ -138,7 +138,8 @@ export class BrowserPool implements OnModuleDestroy {
 
     this.logger.log('Launching new Chromium with stealth...');
     const t0 = Date.now();
-    const browser = (await stealthChromium.launch({
+
+    const launchOpts: any = {
       headless: process.env.API_PURCHASE_HEADLESS === 'true',
       args: [
         '--no-sandbox',
@@ -147,7 +148,17 @@ export class BrowserPool implements OnModuleDestroy {
         '--disable-features=IsolateOrigins,site-per-process',
       ],
       ignoreDefaultArgs: ['--enable-automation'],
-    })) as Browser;
+    };
+
+    // На проде используем системный Chromium (Debian apt-get install chromium).
+    // ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH в Dockerfile НЕ работает с Playwright API,
+    // нужно передавать явно в launch options.
+    const systemChromium = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
+    if (systemChromium) {
+      launchOpts.executablePath = systemChromium;
+    }
+
+    const browser = (await stealthChromium.launch(launchOpts)) as Browser;
     this.logger.log(`Browser launched in ${Date.now() - t0}ms`);
     return browser;
   }
