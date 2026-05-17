@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { pricingApi, ordersApi, type PublicPackage } from '@/lib/api';
 import VbucksIcon from '@/components/ui/VbucksIcon';
+import PurchaseFlowDemo from '@/components/landing/PurchaseFlowDemo';
 
 const FALLBACK_PACKAGES: PublicPackage[] = [
   { vbucksAmount: 800,   priceRUB: 499,  popular: false },
@@ -217,6 +218,7 @@ export default function LandingPage() {
           </a>
           <div className="landing-nav-links">
             <a href="#how">Как работает</a>
+            <a href="#demo">Демо</a>
             <a href="#packages">Пакеты</a>
             <a href="#trust">Гарантии</a>
             <a href="#faq">FAQ</a>
@@ -385,6 +387,8 @@ export default function LandingPage() {
             </div>
           ))}
         </section>
+
+        <PurchaseFlowDemo />
 
         <section className="landing-section landing-reveal" id="trust">
           <div className="landing-section-head">
