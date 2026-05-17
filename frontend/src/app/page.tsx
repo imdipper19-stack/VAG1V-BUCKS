@@ -417,8 +417,8 @@ export default function LandingPage() {
               <div className="landing-live-row" key={order.id}>
                 <b>{order.id}</b>
                 <span>{order.amount}</span>
-                <span title="Время от создания заказа до выдачи V-Bucks" className="landing-live-duration">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: '-2px', marginRight: 6 }}>
+                <span title="Время от создания заказа до выдачи V-Bucks" className="landing-live-duration" style={{ whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="9" />
                     <polyline points="12 7 12 12 15 14" />
                   </svg>
