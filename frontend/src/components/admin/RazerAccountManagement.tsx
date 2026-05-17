@@ -4,6 +4,28 @@ import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
 import api from '@/lib/api';
 
+/** Стилизованная иконка cookie (line-style, наследует currentColor). */
+function CookieIcon({ size = 14 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ verticalAlign: '-2px', display: 'inline-block' }}
+    >
+      <path d="M21 12a9 9 0 1 1-9-9 5 5 0 0 0 5 5 5 5 0 0 0 5 5z" />
+      <circle cx="9" cy="10" r="0.6" fill="currentColor" />
+      <circle cx="14" cy="14" r="0.6" fill="currentColor" />
+      <circle cx="9" cy="16" r="0.6" fill="currentColor" />
+    </svg>
+  );
+}
+
 interface RazerAccount {
   id: string;
   username: string;
@@ -339,8 +361,8 @@ export default function RazerAccountManagement() {
 
             {/* Куки опционально — для ускорения первого входа */}
             <details className="rounded-lg border border-white/10 p-3" style={{ background: 'rgba(255,255,255,.02)' }}>
-              <summary className="cursor-pointer text-sm text-gray-400 hover:text-white">
-                🍪 Добавить куки сессии (опционально, ускоряет первый вход)
+              <summary className="cursor-pointer text-sm text-gray-400 hover:text-white inline-flex items-center gap-1.5">
+                <CookieIcon /> Добавить куки сессии (опционально, ускоряет первый вход)
               </summary>
               <div className="mt-3 space-y-2">
                 <p className="text-xs text-gray-500">
@@ -379,7 +401,7 @@ export default function RazerAccountManagement() {
                 </div>
                 <div className="flex items-center gap-2">
                   {account.sessionCookies && (
-                    <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(34,197,94,.15)', color: '#22c55e' }}>🍪 куки</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full inline-flex items-center gap-1" style={{ background: 'rgba(34,197,94,.15)', color: '#22c55e' }}><CookieIcon size={11} /> куки</span>
                   )}
                   {account.trustLevel && (
                     <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(139,92,246,.15)', color: '#a78bfa' }}>{getTrustLabel(account.trustLevel)}</span>
@@ -399,7 +421,7 @@ export default function RazerAccountManagement() {
 
               {cookieFormId === account.id && (
                 <div className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(139,92,246,.06)', border: '1px solid rgba(139,92,246,.2)' }}>
-                  <div className="text-sm font-medium" style={{ color: '#a78bfa' }}>🍪 Вставьте куки из браузера</div>
+                  <div className="text-sm font-medium inline-flex items-center gap-1.5" style={{ color: '#a78bfa' }}><CookieIcon /> Вставьте куки из браузера</div>
                   <p className="text-xs text-gray-500">
                     Войдите в <a href="https://gold.razer.com" target="_blank" rel="noreferrer" className="underline">gold.razer.com</a> вручную,
                     затем экспортируйте куки через расширение <b>Cookie-Editor</b> (Export → JSON) и вставьте сюда.
@@ -437,7 +459,9 @@ export default function RazerAccountManagement() {
                   className="px-3 py-2 rounded-lg text-sm font-medium transition-all"
                   style={{ background: 'rgba(139,92,246,.15)', border: '1px solid rgba(139,92,246,.3)', color: '#a78bfa' }}
                 >
-                  🍪 {account.sessionCookies ? 'Обновить куки' : 'Добавить куки'}
+                  <span className="inline-flex items-center gap-1.5">
+                    <CookieIcon /> {account.sessionCookies ? 'Обновить куки' : 'Добавить куки'}
+                  </span>
                 </button>
                 {account.sessionCookies && cookieFormId !== account.id && (
                   <button
