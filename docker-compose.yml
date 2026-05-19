@@ -79,6 +79,8 @@ services:
       # Сохраняем диагностические скриншоты при фейлах (no_session_token, razer_no_otp, etc).
       # Без этого volume они теряются при перезапуске контейнера.
       - ./backend/screenshots:/app/screenshots
+      # Ключи AntilopaPay — не в git, монтируем с хоста
+      - ./backend/secrets:/app/secrets:ro
     dns:
       - 8.8.8.8
       - 1.1.1.1
