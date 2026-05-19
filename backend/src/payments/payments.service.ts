@@ -1,14 +1,20 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import * as crypto from 'crypto';
+import * as fs from 'fs';
+import * as path from 'path';
 
-export interface AntiLavInvoice {
-  id: string;
-  orderId: string;
+// ─────────────────────────────────────────────────────────────
+// Типы
+// ─────────────────────────────────────────────────────────────
+
+export interface AntilopaInvoice {
+  id: string;           // payment_id из ответа
+  orderId: string;      // наш order_id
   amount: number;
   currency: string;
-  status: 'pending' | 'paid' | 'expired' | 'cancelled';
+  status: 'pending' | 'paid' | 'expired' | 'cancelled' | 'failed';
   paymentUrl: string;
   createdAt: Date;
   expiresAt: Date;
@@ -19,264 +25,332 @@ export interface CreateInvoiceDto {
   amount: number;
   currency?: string;
   description?: string;
+  customerEmail?: string;
 }
 
-export enum PaymentMethod {
-  CARD = 'card',
-  SBP = 'sbp',
-  CRYPTO = 'crypto',
-  RAZER_GOLD = 'razer_gold',
-}
+// ─────────────────────────────────────────────────────────────
+// Сервис
+// ─────────────────────────────────────────────────────────────
 
 @Injectable()
-export class PaymentsService {
+export class PaymentsService implements OnModuleInit {
   private readonly logger = new Logger(PaymentsService.name);
-  private readonly apiKey: string;
-  private readonly shopId: string;
-  private readonly baseUrl = 'https://api.antilav.com/v1';
+
+  // Из кабинета AntilopaPay → Технические данные → Идентификатор проекта
+  private readonly projectIdentificator: string;
+  // Из кабинета → secret_id (X-Apay-Secret-Id)
+  private readonly secretId: string;
+  // Базовый URL API
+  private readonly apiBase = 'https://lk.antilopay.com/api/v1';
   private readonly isProduction: boolean;
 
-  private readonly webhookSecret: string;
+  /** Приватный RSA ключ магазина (PKCS#8 PEM) — для подписи исходящих запросов */
+  private secretKeyPem: string | null = null;
+  /** Публичный RSA ключ AntilopaPay — для верификации входящих callback'ов */
+  private callbackPublicKeyPem: string | null = null;
 
-  constructor(private configService: ConfigService) {
-    this.apiKey = this.configService.get('ANTILAV_API_KEY', '');
-    this.shopId = this.configService.get('ANTILAV_SHOP_ID', '');
-    this.webhookSecret = this.configService.get('WEBHOOK_SECRET', '');
+  private readonly http: AxiosInstance;
+
+  constructor(private readonly configService: ConfigService) {
+    this.secretId = this.configService.get<string>('ANTILOPAPAY_SECRET_ID', '');
+    this.projectIdentificator = this.configService.get<string>('ANTILOPAPAY_PROJECT_ID', '');
     this.isProduction = this.configService.get('NODE_ENV') === 'production';
+
+    this.http = axios.create({
+      baseURL: this.apiBase,
+      timeout: 15_000,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
-  /**
-   * Create a new payment invoice with AntiLav
-   */
-  async createInvoice(data: CreateInvoiceDto): Promise<AntiLavInvoice> {
-    // Если нет API ключа (dev mode) - возвращаем mock
-    if (!this.apiKey || !this.shopId) {
-      this.logger.warn('AntiLav API not configured, returning mock invoice');
-      return this.createMockInvoice(data);
+  onModuleInit(): void {
+    this.loadKeys();
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Загрузка ключей из файлов
+  // ─────────────────────────────────────────────────────────────
+
+  private loadKeys(): void {
+    const secretKeyPath = this.configService.get<string>(
+      'ANTILOPAPAY_SECRET_KEY_PEM_PATH',
+      './secrets/antilopapay-secret.pem',
+    );
+    const callbackPubPath = this.configService.get<string>(
+      'ANTILOPAPAY_SIGN_PUBLIC_KEY_PEM_PATH',
+      './secrets/antilopapay-callback-pub.pem',
+    );
+
+    try {
+      const resolved = path.resolve(process.cwd(), secretKeyPath);
+      this.secretKeyPem = fs.readFileSync(resolved, 'utf8');
+      this.logger.log('[AntilopaPay] Secret key loaded');
+    } catch (err: any) {
+      const msg = `[AntilopaPay] Cannot load secret key from ${secretKeyPath}: ${err.message}`;
+      if (this.isProduction) throw new Error(msg);
+      this.logger.warn(msg + ' — running in dev/mock mode');
     }
 
     try {
-      const response = await axios.post(
-        `${this.baseUrl}/invoices`,
-        {
-          shop_id: this.shopId,
-          external_id: data.orderId,
-          amount: data.amount,
-          currency: data.currency || 'TRY',
-          description: data.description || `V-Bucks Order ${data.orderId}`,
-          lifetime: 3600, // 1 hour
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          timeout: 10000,
-        }
-      );
-
-      return {
-        id: response.data.id,
-        orderId: data.orderId,
-        amount: response.data.amount,
-        currency: response.data.currency,
-        status: response.data.status,
-        paymentUrl: response.data.payment_url,
-        createdAt: new Date(response.data.created_at),
-        expiresAt: new Date(response.data.expires_at),
-      };
-    } catch (error: any) {
-      this.logger.error('Failed to create AntiLav invoice:', error.message);
-      // В dev режиме возвращаем mock
-      if (!this.isProduction) {
-        return this.createMockInvoice(data);
-      }
-      throw error;
+      const resolved = path.resolve(process.cwd(), callbackPubPath);
+      this.callbackPublicKeyPem = fs.readFileSync(resolved, 'utf8');
+      this.logger.log('[AntilopaPay] Callback public key loaded');
+    } catch (err: any) {
+      const msg = `[AntilopaPay] Cannot load callback public key from ${callbackPubPath}: ${err.message}`;
+      if (this.isProduction) throw new Error(msg);
+      this.logger.warn(msg + ' — signature verification will be skipped in dev');
     }
   }
 
-  /**
-   * Create mock invoice for development
-   */
-  private createMockInvoice(data: CreateInvoiceDto): AntiLavInvoice {
-    const mockId = `inv_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-    return {
-      id: mockId,
-      orderId: data.orderId,
-      amount: data.amount,
-      currency: data.currency || 'TRY',
-      status: 'pending',
-      paymentUrl: `https://pay.antilav.com/mock/${mockId}`,
-      createdAt: new Date(),
-      expiresAt: new Date(Date.now() + 3600 * 1000),
-    };
+  // ─────────────────────────────────────────────────────────────
+  // Подпись исходящих запросов (SHA256WithRSA)
+  // Согласно документации: тело запроса как JSON-строка без лишних пробелов,
+  // подпись передаётся в заголовке X-Apay-Sign
+  // ─────────────────────────────────────────────────────────────
+
+  private signBody(jsonString: string): string {
+    if (!this.secretKeyPem) {
+      throw new Error('[AntilopaPay] Secret key not loaded — cannot sign request');
+    }
+    const sign = crypto.createSign('RSA-SHA256');
+    sign.update(jsonString, 'utf8');
+    return sign.sign(this.secretKeyPem, 'base64');
   }
 
   /**
-   * Check invoice status
+   * Выполняет POST запрос к AntilopaPay API с правильными заголовками.
+   * Согласно документации:
+   * - Content-Type: application/json
+   * - X-Apay-Secret-Id: идентификатор мерчанта
+   * - X-Apay-Sign: подпись тела запроса
+   * - X-Apay-Sign-Version: 1
    */
-  async checkInvoice(invoiceId: string): Promise<AntiLavInvoice | null> {
-    // Mock invoice для development
-    if (invoiceId.startsWith('inv_') || !this.apiKey) {
+  private async apiPost<T = any>(endpoint: string, body: Record<string, unknown>): Promise<T> {
+    // JSON без лишних пробелов — именно так требует документация
+    const jsonBody = JSON.stringify(body);
+    const signature = this.signBody(jsonBody);
+
+    const resp = await this.http.post<T>(endpoint, jsonBody, {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Apay-Secret-Id': this.secretId,
+        'X-Apay-Sign': signature,
+        'X-Apay-Sign-Version': '1',
+      },
+    });
+
+    return resp.data;
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Верификация подписи входящих callback'ов
+  // Заголовок: X-Apay-Callback (подпись), X-Apay-Callback-Version (версия)
+  // Подпись вычисляется по полному телу запроса
+  // ─────────────────────────────────────────────────────────────
+
+  verifyCallbackSignature(rawBody: string | Buffer, signature: string): boolean {
+    if (!this.callbackPublicKeyPem) {
+      if (this.isProduction) {
+        this.logger.error('[AntilopaPay] Public key not loaded — rejecting callback');
+        return false;
+      }
+      this.logger.warn('[AntilopaPay] Public key not loaded — skipping verification in dev');
+      return true;
+    }
+
+    if (!signature) {
+      this.logger.warn('[AntilopaPay] Missing X-Apay-Callback header');
+      return false;
+    }
+
+    try {
+      const verify = crypto.createVerify('RSA-SHA256');
+      verify.update(rawBody);
+      return verify.verify(this.callbackPublicKeyPem, signature, 'base64');
+    } catch (err: any) {
+      this.logger.error(`[AntilopaPay] Signature verification error: ${err.message}`);
+      return false;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Создание платежа (payment/create)
+  // Согласно документации раздел 5.1
+  // ─────────────────────────────────────────────────────────────
+
+  async createInvoice(data: CreateInvoiceDto): Promise<AntilopaInvoice> {
+    if (!this.secretId || !this.secretKeyPem || !this.projectIdentificator) {
+      this.logger.warn('[AntilopaPay] Not configured — returning mock invoice');
+      return this.mockInvoice(data);
+    }
+
+    const baseUrl = this.configService.get<string>('BASE_URL', 'https://bag1v-bucks.shop');
+
+    // Все обязательные поля согласно документации
+    const body: Record<string, unknown> = {
+      project_identificator: this.projectIdentificator,
+      amount: data.amount,
+      order_id: data.orderId,          // уникальный идентификатор на стороне мерчанта
+      currency: 'RUB',                 // только RUB согласно документации
+      product_name: 'V-Bucks Fortnite',
+      product_type: 'goods',           // goods или services
+      description: data.description || `Покупка V-Bucks — заказ ${data.orderId}`,
+      success_url: `${baseUrl}/order/success?orderId=${data.orderId}`,
+      fail_url: `${baseUrl}/order/cancel?orderId=${data.orderId}`,
+      customer: {
+        email: data.customerEmail || 'customer@bag1v-bucks.shop',
+      },
+    };
+
+    try {
+      const resp = await this.apiPost<{
+        code: number;
+        payment_id?: string;
+        payment_url?: string;
+        error?: string;
+      }>('/payment/create', body);
+
+      if (resp.code !== 0) {
+        this.logger.error(`[AntilopaPay] createInvoice error code=${resp.code}: ${resp.error}`);
+        if (!this.isProduction) return this.mockInvoice(data);
+        throw new Error(`AntilopaPay error ${resp.code}: ${resp.error}`);
+      }
+
       return {
-        id: invoiceId,
-        orderId: 'unknown',
-        amount: 0,
-        currency: 'TRY',
+        id: resp.payment_id!,
+        orderId: data.orderId,
+        amount: data.amount,
+        currency: 'RUB',
         status: 'pending',
-        paymentUrl: '',
+        paymentUrl: resp.payment_url!,
+        createdAt: new Date(),
+        expiresAt: new Date(Date.now() + 3_600_000),
+      };
+    } catch (err: any) {
+      this.logger.error(`[AntilopaPay] createInvoice failed: ${err.message}`);
+      if (!this.isProduction) return this.mockInvoice(data);
+      throw err;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Проверка статуса платежа (payment/check)
+  // Согласно документации раздел 5.2
+  // ─────────────────────────────────────────────────────────────
+
+  async checkInvoice(orderId: string): Promise<AntilopaInvoice | null> {
+    if (!this.secretId || !this.secretKeyPem || !this.projectIdentificator) {
+      return null;
+    }
+
+    try {
+      const resp = await this.apiPost<{
+        code: number;
+        payment_id?: string;
+        order_id?: string;
+        payment_url?: string;
+        status?: string;
+        amount?: number;
+        currency?: string;
+        error?: string;
+      }>('/payment/check', {
+        project_identificator: this.projectIdentificator,
+        order_id: orderId,
+      });
+
+      if (resp.code !== 0) {
+        this.logger.warn(`[AntilopaPay] checkInvoice code=${resp.code}: ${resp.error}`);
+        return null;
+      }
+
+      // Маппинг статусов AntilopaPay → наши статусы
+      const statusMap: Record<string, AntilopaInvoice['status']> = {
+        PENDING: 'pending',
+        SUCCESS: 'paid',
+        FAIL: 'failed',
+        CANCEL: 'cancelled',
+        EXPIRED: 'expired',
+        CHARGEBACK: 'failed',
+        REVERSED: 'cancelled',
+      };
+
+      return {
+        id: resp.payment_id ?? '',
+        orderId: resp.order_id ?? orderId,
+        amount: resp.amount ?? 0,
+        currency: resp.currency ?? 'RUB',
+        status: statusMap[resp.status ?? ''] ?? 'pending',
+        paymentUrl: resp.payment_url ?? '',
         createdAt: new Date(),
         expiresAt: new Date(),
       };
-    }
-
-    try {
-      const response = await axios.get(
-        `${this.baseUrl}/invoices/${invoiceId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-          },
-          timeout: 10000,
-        }
-      );
-
-      return {
-        id: response.data.id,
-        orderId: response.data.external_id,
-        amount: response.data.amount,
-        currency: response.data.currency,
-        status: response.data.status,
-        paymentUrl: response.data.payment_url,
-        createdAt: new Date(response.data.created_at),
-        expiresAt: new Date(response.data.expires_at),
-      };
-    } catch (error) {
-      this.logger.error('Failed to check invoice:', error);
+    } catch (err: any) {
+      this.logger.error(`[AntilopaPay] checkInvoice failed: ${err.message}`);
       return null;
     }
   }
 
-  /**
-   * Cancel an invoice
-   */
-  async cancelInvoice(invoiceId: string): Promise<boolean> {
-    if (!this.apiKey) {
-      this.logger.warn('AntiLav API not configured');
-      return false;
-    }
+  // ─────────────────────────────────────────────────────────────
+  // Парсинг callback payload
+  // Согласно документации раздел 10.6 — поле type='payment', order_id, status
+  // ─────────────────────────────────────────────────────────────
 
-    try {
-      await axios.post(
-        `${this.baseUrl}/invoices/${invoiceId}/cancel`,
-        {},
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-          },
-          timeout: 10000,
-        }
-      );
-      return true;
-    } catch (error) {
-      this.logger.error('Failed to cancel invoice:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Get payment methods available
-   */
-  async getPaymentMethods(): Promise<Array<{
-    id: string;
-    name: string;
-    nameEn: string;
-    commission: number;
-    minAmount: number;
-    maxAmount: number;
-    icon?: string;
-  }>> {
-    // Возвращаем реальные методы (для Турции)
-    return [
-      {
-        id: PaymentMethod.CARD,
-        name: 'Банковская карта',
-        nameEn: 'Credit/Debit Card',
-        commission: 0,
-        minAmount: 50,
-        maxAmount: 50000,
-        icon: 'card',
-      },
-      {
-        id: PaymentMethod.SBP,
-        name: 'СБП (Россия)',
-        nameEn: 'SBP (Russia)',
-        commission: 0,
-        minAmount: 10,
-        maxAmount: 600000,
-        icon: 'sbp',
-      },
-      {
-        id: PaymentMethod.CRYPTO,
-        name: 'Криптовалюта',
-        nameEn: 'Cryptocurrency',
-        commission: 1,
-        minAmount: 100,
-        maxAmount: 1000000,
-        icon: 'crypto',
-      },
-    ];
-  }
-
-  /**
-   * Verify webhook signature
-   */
-  verifyWebhookSignature(payload: string, signature: string): boolean {
-    if (!this.webhookSecret) {
-      this.logger.warn('WEBHOOK_SECRET not configured, skipping signature verification');
-      return !this.isProduction; // Allow in dev, reject in production
-    }
-
-    try {
-      const expectedSignature = crypto
-        .createHmac('sha256', this.webhookSecret)
-        .update(payload)
-        .digest('hex');
-
-      // Timing-safe comparison to prevent timing attacks
-      const sigBuf = Buffer.from(signature);
-      const expectedBuf = Buffer.from(expectedSignature);
-
-      if (sigBuf.length !== expectedBuf.length) return false;
-      return crypto.timingSafeEqual(sigBuf, expectedBuf);
-    } catch (error) {
-      this.logger.error('Webhook signature verification failed:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Parse webhook payload
-   */
-  parseWebhookPayload(body: any): {
-    event: string;
-    invoiceId: string;
+  parseCallbackPayload(body: any): {
+    type: string;
+    paymentId: string;
     orderId: string;
     status: string;
     amount?: number;
+    originalAmount?: number;
     currency?: string;
   } | null {
     try {
+      if (!body || !body.type) return null;
+
       return {
-        event: body.event,
-        invoiceId: body.invoice_id || body.id,
-        orderId: body.external_id || body.order_id,
-        status: body.status,
+        type: body.type,                          // 'payment', 'withdraw', 'refund', 'topup'
+        paymentId: body.payment_id ?? '',
+        orderId: body.order_id ?? '',             // наш orderId
+        status: body.status ?? '',                // SUCCESS, FAIL, etc.
         amount: body.amount,
+        originalAmount: body.original_amount,     // ВАЖНО: проверять совпадение с нашей суммой
         currency: body.currency,
       };
     } catch {
       return null;
     }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Mock для dev-режима
+  // ─────────────────────────────────────────────────────────────
+
+  private mockInvoice(data: CreateInvoiceDto): AntilopaInvoice {
+    const id = `mock_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const baseUrl = this.configService.get<string>('BASE_URL', 'http://localhost:3002');
+    return {
+      id,
+      orderId: data.orderId,
+      amount: data.amount,
+      currency: 'RUB',
+      status: 'pending',
+      paymentUrl: `${baseUrl}/payment/mock?invoice=${id}&orderId=${data.orderId}`,
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 3_600_000),
+    };
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Legacy compat
+  // ─────────────────────────────────────────────────────────────
+
+  /** @deprecated use verifyCallbackSignature */
+  verifyWebhookSignature(payload: string, signature: string): boolean {
+    return this.verifyCallbackSignature(payload, signature);
+  }
+
+  /** @deprecated use parseCallbackPayload */
+  parseWebhookPayload(body: any) {
+    return this.parseCallbackPayload(body);
   }
 }
