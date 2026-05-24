@@ -77,9 +77,36 @@ export const pricingApi = {
 
 // Orders API
 export const ordersApi = {
-  create: async (data: { vbucksAmount: number; priceTRY: number; sellerId?: string; webhookUrl?: string }) => {
+  create: async (data: {
+    vbucksAmount: number;
+    priceTRY: number;
+    sellerId?: string;
+    webhookUrl?: string;
+    promoCode?: string;
+  }) => {
     const response = await api.post('/orders', data);
     return response.data;
+  },
+
+  /**
+   * Pre-checkout promo code validation (Requirement 9.2).
+   *
+   * Returns the parsed envelope on success (HTTP 2xx) and re-throws on
+   * 400/404 so callers can surface the localised `message` field that
+   * the backend produces (`Промокод не найден` / `Промокод неактивен`).
+   */
+  validatePromo: async (data: { promoCode: string; priceTRY: number }) => {
+    const response = await api.post('/orders/validate-promo', data);
+    return response.data as {
+      success: boolean;
+      data: {
+        valid: true;
+        discountRate: number;
+        commissionRate: number;
+        partnerName: string;
+        discountAmount: number;
+      };
+    };
   },
 
   getBySlug: async (slug: string) => {
@@ -195,6 +222,77 @@ export const webhooksApi = {
 
   trigger: async (orderId: string) => {
     const response = await api.post('/webhooks/trigger', { orderId });
+    return response.data;
+  },
+};
+
+// Reviews API
+export interface PublicReview {
+  id: string;
+  nickname: string;
+  stars: number;
+  text: string;
+  createdAt: string;
+}
+
+export interface ReviewEligibility {
+  canSubmit: boolean;
+  reason?: 'not_completed' | 'window_expired' | 'already_reviewed';
+  alreadyReviewed: boolean;
+}
+
+export interface AdminReview {
+  id: string;
+  orderId: string;
+  nickname: string;
+  stars: number;
+  text: string;
+  status: 'pending' | 'approved' | 'rejected';
+  rejectionReason: string | null;
+  moderatedBy: string | null;
+  approvedAt: string | null;
+  rejectedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const reviewsApi = {
+  // Public — landing carousel
+  listPublic: async (limit = 50): Promise<{ success: boolean; data: PublicReview[] }> => {
+    const response = await api.get('/reviews/public', { params: { limit } });
+    return response.data;
+  },
+
+  // Public — eligibility check on the order timeline page
+  checkEligibility: async (orderId: string): Promise<{ success: boolean; data: ReviewEligibility }> => {
+    const response = await api.get(`/orders/${orderId}/review-eligibility`);
+    return response.data;
+  },
+
+  // Public — submit a review
+  submit: async (
+    orderId: string,
+    payload: { nickname: string; stars: number; text: string }
+  ): Promise<{ success: boolean; data: { id: string; status: 'pending' } }> => {
+    const response = await api.post(`/orders/${orderId}/reviews`, payload);
+    return response.data;
+  },
+
+  // Admin — list moderation queue
+  listAdmin: async (status?: 'pending' | 'approved' | 'rejected'): Promise<{ success: boolean; data: AdminReview[] }> => {
+    const response = await api.get('/admin/reviews', { params: status ? { status } : {} });
+    return response.data;
+  },
+
+  // Admin — approve
+  approve: async (id: string): Promise<{ success: boolean; data: AdminReview }> => {
+    const response = await api.post(`/admin/reviews/${id}/approve`);
+    return response.data;
+  },
+
+  // Admin — reject with optional reason
+  reject: async (id: string, reason?: string): Promise<{ success: boolean; data: AdminReview }> => {
+    const response = await api.post(`/admin/reviews/${id}/reject`, reason ? { reason } : {});
     return response.data;
   },
 };

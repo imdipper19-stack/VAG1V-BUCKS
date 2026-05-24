@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { ordersApi } from '@/lib/api';
 import { useOrderStream } from '@/lib/useOrderStream';
+import ReviewSubmissionCard from '@/components/order/ReviewSubmissionCard';
 
 interface TimelinePageProps {
   params: {
@@ -372,6 +373,15 @@ export default function TimelinePage({ params }: TimelinePageProps) {
           to { stroke-dashoffset: 0; stroke-dasharray: 24; }
         }
       `}</style>
+
+      {/*
+        Review submission card. The component pings the eligibility
+        endpoint on mount and renders nothing for `not_completed` /
+        `window_expired` / errors (Requirement 3.2 / 3.4), shows the
+        «Спасибо…» panel for `already_reviewed` (Requirement 3.3) and
+        the form for `eligible` orders. Safe to always mount.
+      */}
+      <ReviewSubmissionCard orderId={orderId} />
     </div>
   );
 }
