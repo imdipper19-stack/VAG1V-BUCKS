@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ordersApi, pricingApi, type AdminPackage } from '@/lib/api';
 import { clearAdminSession, getAdminToken, getAdminUser } from '@/lib/auth';
@@ -308,6 +309,30 @@ export default function AdminPage() {
           >
             Безопасность
           </button>
+          <Link
+            href="/admin/applications"
+            className="px-4 py-3 text-sm font-medium text-gray-400 hover:text-gray-300 transition-colors"
+          >
+            Заявки
+          </Link>
+          <Link
+            href="/admin/partners"
+            className="px-4 py-3 text-sm font-medium text-gray-400 hover:text-gray-300 transition-colors"
+          >
+            Партнёры
+          </Link>
+          <Link
+            href="/admin/payouts"
+            className="px-4 py-3 text-sm font-medium text-gray-400 hover:text-gray-300 transition-colors"
+          >
+            Выплаты
+          </Link>
+          <Link
+            href="/admin/reviews"
+            className="px-4 py-3 text-sm font-medium text-gray-400 hover:text-gray-300 transition-colors"
+          >
+            Отзывы
+          </Link>
         </nav>
       </div>
 
