@@ -10,6 +10,7 @@ import { OrderEventBus } from './order-event-bus.service';
 import { OrderStep, StepStatus } from './interfaces/step-event.interface';
 import { STEP_PROGRESS_MAP, STEP_MESSAGES_RU } from './constants/step-progress';
 import { EpicApiPurchaseService, EpicPurchaseProxy } from '../api-purchase/epic-api-purchase.service';
+import { CommissionService } from '../partner/commission.service';
 
 /** Минимальный shape для handleSuccess/handleFailure — не зависит от старого EpicBrowserService */
 interface PurchaseSummary {
@@ -41,6 +42,9 @@ export class OrderProcessingService {
     private readonly pricingService: PricingService,
     private readonly orderEventBus: OrderEventBus,
     private readonly apiPurchaseService: EpicApiPurchaseService,
+    // Partner program: drives commission lifecycle on order
+    // success/failure transitions (Requirement 10.2, 10.3).
+    private readonly commissionService: CommissionService,
   ) {}
 
   private emitStep(orderId: string, step: OrderStep, status: StepStatus, message?: string): void {
@@ -216,6 +220,19 @@ export class OrderProcessingService {
     });
     await this.log(order, '[purchase]', 'V-Bucks delivered successfully', LogLevel.SUCCESS);
 
+    // Partner program: flip the matching commission entry from pending
+    // to approved so its amount becomes spendable in `getBalance`
+    // (Requirement 10.2). Idempotent — repeated calls are no-ops on the
+    // CommissionService side. We swallow errors so a partner-side hiccup
+    // never blocks the customer's success notification or webhook.
+    if (order.partnerId) {
+      await this.commissionService.approve(order.id).catch((err) =>
+        this.logger.warn(
+          `Failed to approve commission for order ${order.orderId}: ${err.message}`,
+        ),
+      );
+    }
+
     await this.notificationService
       .notifyOrderCompleted(order.orderId, order.epicDisplayName ?? 'unknown', order.vbucksAmount)
       .catch((err) => this.logger.warn(`Telegram notify failed: ${err.message}`));
@@ -240,6 +257,17 @@ export class OrderProcessingService {
       screenshotUrl: result.screenshotPath ?? undefined,
     });
 
+    // Partner program: cancel any pending commission for this order
+    // (Requirement 10.3). Idempotent — if the entry is missing or
+    // already in a terminal state it's a silent no-op.
+    if (order.partnerId) {
+      await this.commissionService.cancel(order.id).catch((err) =>
+        this.logger.warn(
+          `Failed to cancel commission for order ${order.orderId}: ${err.message}`,
+        ),
+      );
+    }
+
     await this.notificationService
       .notifyOrderFailed(order.orderId, `${reason}: ${message}`)
       .catch((err) => this.logger.warn(`Telegram notify failed: ${err.message}`));
@@ -250,6 +278,18 @@ export class OrderProcessingService {
     await this.ordersService.updateStatus(order.id, OrderStatusEnum.FAILED, {
       errorMessage: message,
     });
+
+    // Partner program: same cancel hook as handleFailure — markFailed
+    // is the early-exit path before purchase even starts (e.g. missing
+    // Epic access token). Without this hook the commission entry would
+    // be stranded in `pending` forever (Requirement 10.3, 16.6).
+    if (order.partnerId) {
+      await this.commissionService.cancel(order.id).catch((err) =>
+        this.logger.warn(
+          `Failed to cancel commission for order ${order.orderId}: ${err.message}`,
+        ),
+      );
+    }
   }
 
   private async log(order: Order, tag: string, message: string, level: LogLevel): Promise<void> {

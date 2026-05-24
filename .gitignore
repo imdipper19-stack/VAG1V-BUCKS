@@ -61,3 +61,6 @@ backend/probe-*.mjs
 backend/src/api-purchase/HANDOFF.md
 HANDOFF.md
 frontend/out/
+
+# External API documentation (kept locally only)
+*.pdf

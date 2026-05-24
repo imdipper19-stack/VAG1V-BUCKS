@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { Providers } from './providers';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
 import '@/styles/globals.css';
 import { Inter, JetBrains_Mono, Manrope } from 'next/font/google';
 
@@ -95,7 +97,9 @@ export default function RootLayout({
 
           {/* Main Content */}
           <div className="page-wrapper">
+            <Header />
             {children}
+            <Footer />
           </div>
         </Providers>
       </body>

@@ -29,6 +29,18 @@ export interface CreateOrderData {
   sellerId?: string;
   webhookUrl?: string;
   region?: string;
+  /**
+   * Partner program snapshot fields. Set together as a group when a
+   * promo code was successfully applied at checkout; otherwise omitted
+   * so the columns stay NULL. Snapshots freeze the partner's rates onto
+   * the order at creation time so later admin edits do not change
+   * already-placed orders (Requirement 7.3, 16.1, 16.2).
+   */
+  partnerId?: string;
+  promoCodeSnapshot?: string;
+  discountRateSnapshot?: number;
+  commissionRateSnapshot?: number;
+  discountAmount?: number;
 }
 
 @Injectable()
@@ -60,6 +72,14 @@ export class OrdersService {
       sellerId: data.sellerId,
       webhookUrl: data.webhookUrl,
       expiresAt,
+      // Partner program snapshots (all-or-nothing group). When the
+      // caller didn't pass a code, these are `undefined` and TypeORM
+      // leaves the columns NULL.
+      partnerId: data.partnerId ?? null,
+      promoCodeSnapshot: data.promoCodeSnapshot ?? null,
+      discountRateSnapshot: data.discountRateSnapshot ?? null,
+      commissionRateSnapshot: data.commissionRateSnapshot ?? null,
+      discountAmount: data.discountAmount ?? null,
     });
 
     const savedOrder = await this.orderRepository.save(order);

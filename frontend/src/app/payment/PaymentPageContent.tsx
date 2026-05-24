@@ -7,6 +7,15 @@ import VbucksIcon from '@/components/ui/VbucksIcon';
 import { ordersApi, paymentsApi } from '@/lib/api';
 
 const TRY_RATE = 1.63;
+const PROMO_CODE_PATTERN = /^[A-Z0-9]{6,16}$/;
+
+type AppliedPromo = {
+  code: string;
+  discountRate: number;
+  /** discount amount expressed in TRY — backend returns TRY because the order is priced in TRY */
+  discountAmountTRY: number;
+  partnerName: string;
+};
 
 export default function PaymentPageContent() {
   const searchParams = useSearchParams();
@@ -16,8 +25,83 @@ export default function PaymentPageContent() {
   const [step, setStep] = useState<'confirm' | 'creating' | 'redirecting'>('confirm');
   const [error, setError] = useState('');
 
+  // Promo code state (Requirement 9.1, 9.6)
+  const [promoCode, setPromoCode] = useState('');
+  const [promoApplying, setPromoApplying] = useState(false);
+  const [promoError, setPromoError] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState<AppliedPromo | null>(null);
+
   const isValidOrder = Number.isFinite(amount) && amount > 0 && Number.isFinite(price) && price > 0;
   const priceTRY = useMemo(() => Number((price / TRY_RATE).toFixed(2)), [price]);
+
+  // Discount in RUB — derived from the TRY discount returned by the backend so the
+  // ratio matches the order snapshot exactly (no rounding drift between currencies).
+  const discountAmountRUB = useMemo(() => {
+    if (!appliedPromo) return 0;
+    return Number((price * appliedPromo.discountRate).toFixed(2));
+  }, [appliedPromo, price]);
+
+  // Final RUB total (Requirement 9.5, 9.8). Without a promo this equals `price`.
+  const finalPriceRUB = useMemo(() => {
+    if (!appliedPromo) return price;
+    const total = price - discountAmountRUB;
+    return total > 0 ? Number(total.toFixed(2)) : 0;
+  }, [appliedPromo, price, discountAmountRUB]);
+
+  const trimmedPromo = promoCode.trim();
+  const canApply =
+    !promoApplying && trimmedPromo.length > 0 && (!appliedPromo || appliedPromo.code !== trimmedPromo);
+
+  const handleApplyPromo = async () => {
+    if (!isValidOrder || !trimmedPromo) return;
+
+    // Cheap client-side shape check so an obviously bad input doesn't burn a roundtrip.
+    // Server validates the same regex (`ValidatePromoCodeDto`).
+    if (!PROMO_CODE_PATTERN.test(trimmedPromo)) {
+      setPromoError('Промокод не найден');
+      setAppliedPromo(null);
+      return;
+    }
+
+    setPromoApplying(true);
+    setPromoError('');
+
+    try {
+      const res = await ordersApi.validatePromo({
+        promoCode: trimmedPromo,
+        priceTRY,
+      });
+
+      if (!res?.success || !res.data) {
+        // Defensive: backend returned 200 without the expected envelope.
+        setPromoError('Промокод не найден');
+        setAppliedPromo(null);
+        return;
+      }
+
+      setAppliedPromo({
+        code: trimmedPromo,
+        discountRate: res.data.discountRate,
+        discountAmountTRY: res.data.discountAmount,
+        partnerName: res.data.partnerName,
+      });
+      setPromoError('');
+    } catch (err: unknown) {
+      // Surface the backend's localised message verbatim
+      // (Requirement 9.3 «Промокод не найден», Requirement 9.4 «Промокод неактивен»).
+      const message = extractApiMessage(err) ?? 'Не удалось проверить промокод. Попробуйте ещё раз.';
+      setPromoError(message);
+      setAppliedPromo(null);
+    } finally {
+      setPromoApplying(false);
+    }
+  };
+
+  const handleClearPromo = () => {
+    setPromoCode('');
+    setPromoError('');
+    setAppliedPromo(null);
+  };
 
   const handleContinue = async () => {
     if (!isValidOrder) return;
@@ -27,10 +111,11 @@ export default function PaymentPageContent() {
     setStep('creating');
 
     try {
-      // 1. Создаём заказ
+      // 1. Создаём заказ — пробрасываем промокод, если он применён (Requirement 9.6).
       const orderResponse = await ordersApi.create({
         vbucksAmount: amount,
         priceTRY,
+        ...(appliedPromo ? { promoCode: appliedPromo.code } : {}),
       });
 
       if (!orderResponse?.success || !orderResponse?.data?.orderId) {
@@ -39,12 +124,12 @@ export default function PaymentPageContent() {
 
       const { orderId, shortUrl } = orderResponse.data;
 
-      // 2. Создаём инвойс AntiLav
+      // 2. Создаём инвойс AntiLav — на сумму с учётом скидки.
       let paymentUrl: string | null = null;
       try {
         const invoiceResponse = await paymentsApi.createInvoice({
           orderId,
-          amount: price,
+          amount: finalPriceRUB,
           currency: 'RUB',
         });
 
@@ -139,8 +224,95 @@ export default function PaymentPageContent() {
                   <div className="grid gap-3 py-5">
                     <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/10 p-4">
                       <span className="text-[#aaa5b9]">Сумма к оплате</span>
-                      <b className="font-[var(--font-jetbrains-mono)] text-xl tracking-[-.05em]">{price.toLocaleString('ru-RU')} ₽</b>
+                      <div className="text-right">
+                        {appliedPromo ? (
+                          <>
+                            <span className="block font-[var(--font-jetbrains-mono)] text-xs text-[#706b80] line-through">
+                              {price.toLocaleString('ru-RU')} ₽
+                            </span>
+                            <b className="block font-[var(--font-jetbrains-mono)] text-xl tracking-[-.05em] text-[#41e59d]">
+                              {finalPriceRUB.toLocaleString('ru-RU')} ₽
+                            </b>
+                          </>
+                        ) : (
+                          <b className="font-[var(--font-jetbrains-mono)] text-xl tracking-[-.05em]">
+                            {price.toLocaleString('ru-RU')} ₽
+                          </b>
+                        )}
+                      </div>
                     </div>
+
+                    {/* Promo code section (Requirement 9.1) */}
+                    <div className="rounded-2xl border border-white/10 bg-black/10 p-4">
+                      <label
+                        htmlFor="promo-code"
+                        className="font-[var(--font-jetbrains-mono)] text-[10px] uppercase tracking-[.08em] text-[#706b80]"
+                      >
+                        Промокод партнёра
+                      </label>
+                      <div className="mt-2 flex gap-2">
+                        <input
+                          id="promo-code"
+                          type="text"
+                          inputMode="text"
+                          autoComplete="off"
+                          spellCheck={false}
+                          maxLength={16}
+                          placeholder="Введите промокод"
+                          value={promoCode}
+                          onChange={(e) => {
+                            setPromoCode(e.target.value.toUpperCase());
+                            if (promoError) setPromoError('');
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && canApply) {
+                              e.preventDefault();
+                              void handleApplyPromo();
+                            }
+                          }}
+                          disabled={loading}
+                          className="flex-1 rounded-xl border border-white/10 bg-black/30 px-3 py-2 font-[var(--font-jetbrains-mono)] text-sm tracking-[.04em] uppercase text-[#f7f5ff] placeholder:text-[#56536a] focus:border-[#8f5cff]/60 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleApplyPromo}
+                          disabled={!canApply || loading}
+                          className="rounded-xl border border-[#8f5cff]/40 bg-[#8f5cff]/15 px-4 py-2 text-xs font-extrabold text-[#dcd3ff] transition hover:bg-[#8f5cff]/25 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#8f5cff]/15"
+                        >
+                          {promoApplying ? 'Проверяем…' : 'Применить'}
+                        </button>
+                      </div>
+
+                      {/* Applied promo confirmation (Requirement 9.5) */}
+                      {appliedPromo && !promoError && (
+                        <div className="mt-3 flex items-start justify-between gap-3 rounded-xl border border-[#41e59d]/25 bg-[#41e59d]/10 p-3">
+                          <div className="text-xs leading-5 text-[#a7e9c9]">
+                            <b className="block text-[#41e59d]">
+                              Промокод {appliedPromo.code} применён
+                            </b>
+                            <span className="block">
+                              Скидка {Math.round(appliedPromo.discountRate * 100)}% — минус{' '}
+                              {discountAmountRUB.toLocaleString('ru-RU')} ₽
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleClearPromo}
+                            className="rounded-lg border border-white/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[.06em] text-[#aaa5b9] hover:text-[#f7f5ff]"
+                          >
+                            Снять
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Promo error (Requirement 9.3, 9.4) */}
+                      {promoError && (
+                        <div className="mt-3 rounded-xl border border-red-400/20 bg-red-500/10 p-3 text-xs text-red-200">
+                          {promoError}
+                        </div>
+                      )}
+                    </div>
+
                     <div className="rounded-2xl border border-[#8f5cff]/25 bg-[#8f5cff]/10 p-4">
                       <b className="block">Оплата через АнтилопаPay</b>
                       <span className="mt-1 block text-sm leading-6 text-[#aaa5b9]">После нажатия кнопки вы будете перенаправлены на страницу оплаты. V-Bucks будут зачислены автоматически после подтверждения платежа.</span>
@@ -189,4 +361,25 @@ export default function PaymentPageContent() {
       </div>
     </main>
   );
+}
+
+/**
+ * Pull a Russian-localised error message out of an axios error.
+ * The backend returns NestJS-style `{ message, statusCode, error }` so
+ * we surface `message` directly to the user (Requirement 9.3, 9.4).
+ */
+function extractApiMessage(err: unknown): string | null {
+  if (typeof err !== 'object' || err === null) return null;
+  const anyErr = err as {
+    response?: { data?: { message?: unknown } };
+    message?: unknown;
+  };
+  const fromResponse = anyErr.response?.data?.message;
+  if (typeof fromResponse === 'string' && fromResponse.length > 0) {
+    return fromResponse;
+  }
+  if (Array.isArray(fromResponse) && typeof fromResponse[0] === 'string') {
+    return fromResponse[0];
+  }
+  return null;
 }

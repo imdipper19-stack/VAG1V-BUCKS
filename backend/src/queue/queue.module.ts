@@ -10,6 +10,7 @@ import { CommonModule } from '../common/common.module';
 import { ProxyModule } from '../proxy/proxy.module';
 import { RazerAccountModule } from '../razer/razer-account.module';
 import { ApiPurchaseModule } from '../api-purchase/api-purchase.module';
+import { PartnerModule } from '../partner/partner.module';
 import { ORDER_QUEUE_NAME } from './constants';
 
 @Module({
@@ -41,6 +42,11 @@ import { ORDER_QUEUE_NAME } from './constants';
     ProxyModule,
     RazerAccountModule,
     ApiPurchaseModule,
+    // Partner program — provides CommissionService consumed by
+    // OrderProcessingService.handleSuccess / handleFailure / markFailed
+    // hooks (Requirement 10.2, 10.3). PartnerModule does not depend on
+    // QueueModule, so no forwardRef is needed.
+    PartnerModule,
   ],
   providers: [OrderProcessor, OrderProcessingService, QueueService, OrderEventBus],
   exports: [BullModule, QueueService, OrderEventBus],

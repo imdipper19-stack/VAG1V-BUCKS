@@ -53,6 +53,49 @@ export class Order {
   @Column({ default: 'TR' })
   region: string;
 
+  // ----------------------------------------------------------------
+  // Partner program fields (added by partner-program spec, Task 1.2)
+  //
+  // All five columns are nullable: orders placed without a promo code
+  // simply leave them NULL. When a partner code IS applied at checkout,
+  // we snapshot the partner's rates onto the order so subsequent rate
+  // changes by the admin do NOT retroactively alter past orders
+  // (Requirement 7.3, 16.1, 16.2).
+  // ----------------------------------------------------------------
+  @Column({ type: 'uuid', name: 'partner_id', nullable: true })
+  @Index()
+  partnerId: string | null;
+
+  @Column({ type: 'varchar', length: 16, name: 'promo_code_snapshot', nullable: true })
+  promoCodeSnapshot: string | null;
+
+  @Column({
+    type: 'decimal',
+    precision: 5,
+    scale: 4,
+    name: 'discount_rate_snapshot',
+    nullable: true,
+  })
+  discountRateSnapshot: number | null;
+
+  @Column({
+    type: 'decimal',
+    precision: 5,
+    scale: 4,
+    name: 'commission_rate_snapshot',
+    nullable: true,
+  })
+  commissionRateSnapshot: number | null;
+
+  @Column({
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    name: 'discount_amount',
+    nullable: true,
+  })
+  discountAmount: number | null;
+
   // Status
   @Column({
     type: 'enum',

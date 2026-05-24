@@ -3,6 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './database/database.module';
 import { AdminModule } from './admin/admin.module';
 import { OrdersModule } from './orders/orders.module';
+import { PartnerModule } from './partner/partner.module';
+import { ReviewsModule } from './reviews/reviews.module';
 import { AuthModule } from './auth/auth.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { PaymentsModule } from './payments/payments.module';
@@ -26,6 +28,8 @@ import { HealthModule } from './health/health.module';
     CommonModule,
     AdminModule,
     OrdersModule,
+    PartnerModule,
+    ReviewsModule,
     AuthModule,
     WebhooksModule,
     PaymentsModule,
