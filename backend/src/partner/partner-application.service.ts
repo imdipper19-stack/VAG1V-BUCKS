@@ -446,20 +446,25 @@ export class PartnerApplicationService {
     displayName: string,
   ): Promise<string> {
     if (explicit) {
-      const existing = await manager.findOne(Partner, {
-        where: { username: explicit },
-      });
+      // Normalize to lowercase so login lookups (also case-insensitive)
+      // never miss because of input casing differences.
+      const normalized = explicit.trim().toLowerCase();
+      const existing = await manager
+        .createQueryBuilder(Partner, 'p')
+        .where('LOWER(p.username) = :u', { u: normalized })
+        .getOne();
       if (existing) {
         throw new ConflictException('Username уже занят');
       }
-      return explicit;
+      return normalized;
     }
 
     for (let i = 0; i < USERNAME_DERIVATION_ATTEMPTS; i++) {
       const candidate = this.deriveUsername(displayName);
-      const existing = await manager.findOne(Partner, {
-        where: { username: candidate },
-      });
+      const existing = await manager
+        .createQueryBuilder(Partner, 'p')
+        .where('LOWER(p.username) = :u', { u: candidate })
+        .getOne();
       if (!existing) return candidate;
     }
     throw new ConflictException(

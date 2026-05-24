@@ -302,7 +302,15 @@ export class PartnerAuthService {
     password: string,
     ip?: string,
   ): Promise<PartnerLoginResult> {
-    const partner = await this.partnerRepo.findOne({ where: { username } });
+    // Case-insensitive lookup so the login form does not need to know
+    // the exact casing the admin used when creating the partner.
+    // Older rows may have mixed-case usernames; new rows are
+    // normalised to lowercase by the create/approve services.
+    const normalized = username?.trim().toLowerCase() ?? '';
+    const partner = await this.partnerRepo
+      .createQueryBuilder('p')
+      .where('LOWER(p.username) = :u', { u: normalized })
+      .getOne();
     if (!partner) {
       this.logger.warn(`Partner login failed: user not found - ${username}${ip ? ` from ${ip}` : ''}`);
       throw new UnauthorizedException('Неверный логин или пароль');
