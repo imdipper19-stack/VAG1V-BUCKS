@@ -161,7 +161,7 @@ export default function TimelinePage({ params }: TimelinePageProps) {
             ? 'V-Bucks зачислены на ваш аккаунт'
             : isFailed
               ? 'Что-то пошло не так'
-              : 'Это займёт несколько минут'}
+              : 'Обычно меньше минуты'}
         </p>
 
         {/* Progress bar */}

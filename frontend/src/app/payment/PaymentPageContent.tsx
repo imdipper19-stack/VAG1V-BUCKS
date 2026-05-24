@@ -187,7 +187,7 @@ export default function PaymentPageContent() {
               Оплата <span className="text-[#b79dff] drop-shadow-[0_0_36px_rgba(143,92,255,.42)]">V-Bucks</span>
             </h1>
             <p className="mt-5 max-w-xl text-[15px] leading-7 text-[#aaa5b9]">
-              После выбора пакета вы будете перенаправлены на страницу оплаты АнтилопаPay. После успешной оплаты авторизуйтесь через Epic Games — бот автоматически зачислит V-Bucks на ваш аккаунт за 5–15 минут.
+              После выбора пакета вы будете перенаправлены на страницу оплаты АнтилопаPay. После успешной оплаты авторизуйтесь через Epic Games — бот автоматически зачислит V-Bucks на ваш аккаунт обычно меньше чем за минуту.
             </p>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
@@ -201,7 +201,7 @@ export default function PaymentPageContent() {
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/[.026] p-4">
                 <span className="font-[var(--font-jetbrains-mono)] text-[10px] uppercase tracking-[.08em] text-[#706b80]">Выдача</span>
-                <b className="mt-1 block text-sm">5-15 минут</b>
+                <b className="mt-1 block text-sm">~1 минута</b>
               </div>
             </div>
           </div>
