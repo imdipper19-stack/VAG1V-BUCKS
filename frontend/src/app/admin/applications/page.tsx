@@ -546,8 +546,11 @@ interface ApproveModalProps {
 }
 
 function ApproveModal({ application, onClose, onSuccess }: ApproveModalProps) {
-  const [discountRate, setDiscountRate] = useState('0.05');
-  const [commissionRate, setCommissionRate] = useState('0.10');
+  // Inputs hold percentages (0-100) so the field semantics match the
+  // labels. We divide by 100 right before posting since the backend DTO
+  // expects fractions in [0..1].
+  const [discountRate, setDiscountRate] = useState('5');
+  const [commissionRate, setCommissionRate] = useState('10');
   const [username, setUsername] = useState('');
   const [promoCode, setPromoCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -560,15 +563,15 @@ function ApproveModal({ application, onClose, onSuccess }: ApproveModalProps) {
     Number.isFinite(cRate) &&
     dRate >= 0 &&
     cRate >= 0 &&
-    dRate <= 1 &&
-    cRate <= 1;
-  const sumExceeds = ratesValid && dRate + cRate > 1;
+    dRate <= 100 &&
+    cRate <= 100;
+  const sumExceeds = ratesValid && dRate + cRate > 100;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setErr(null);
     if (!ratesValid) {
-      setErr('Проценты должны быть в диапазоне 0..1');
+      setErr('Проценты должны быть в диапазоне 0..100');
       return;
     }
     if (sumExceeds) {
@@ -578,8 +581,8 @@ function ApproveModal({ application, onClose, onSuccess }: ApproveModalProps) {
     setSubmitting(true);
     try {
       const body: Record<string, unknown> = {
-        discountRate: dRate,
-        commissionRate: cRate,
+        discountRate: dRate / 100,
+        commissionRate: cRate / 100,
       };
       if (username.trim()) body.username = username.trim();
       if (promoCode.trim()) body.promoCode = promoCode.trim().toUpperCase();
@@ -609,13 +612,13 @@ function ApproveModal({ application, onClose, onSuccess }: ApproveModalProps) {
             label="% скидки покупателю"
             value={discountRate}
             onChange={setDiscountRate}
-            placeholder="0.05"
+            placeholder="5"
           />
           <NumberRateField
             label="% комиссии партнёру"
             value={commissionRate}
             onChange={setCommissionRate}
-            placeholder="0.10"
+            placeholder="10"
           />
         </div>
 
@@ -626,7 +629,7 @@ function ApproveModal({ application, onClose, onSuccess }: ApproveModalProps) {
           Сумма скидки и комиссии не должна превышать 100%.
           {ratesValid && (
             <span className="ml-1">
-              Сейчас: {((dRate + cRate) * 100).toFixed(1)}%
+              Сейчас: {(dRate + cRate).toFixed(1)}%
             </span>
           )}
         </div>
@@ -934,9 +937,9 @@ function NumberRateField({
       </label>
       <input
         type="number"
-        step="0.01"
+        step="0.5"
         min="0"
-        max="1"
+        max="100"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}

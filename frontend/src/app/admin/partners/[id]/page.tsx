@@ -586,11 +586,14 @@ function PromoCodeAndRatesPanel({
   onRegenerateCode: () => void;
 }) {
   const [editing, setEditing] = useState(false);
+  // Inputs hold percentages (0-100). Backend stores fractions in [0..1],
+  // so we * 100 on read and / 100 on save. `formatRate` already prints
+  // the stored fraction as a percentage in the read-only display.
   const [discountInput, setDiscountInput] = useState(
-    String(partner.discountRate ?? '0'),
+    String(Number(partner.discountRate ?? 0) * 100),
   );
   const [commissionInput, setCommissionInput] = useState(
-    String(partner.commissionRate ?? '0'),
+    String(Number(partner.commissionRate ?? 0) * 100),
   );
   const [saving, setSaving] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -599,8 +602,8 @@ function PromoCodeAndRatesPanel({
   // Sync local edit state when the partner reloads after a save.
   useEffect(() => {
     if (!editing) {
-      setDiscountInput(String(partner.discountRate ?? '0'));
-      setCommissionInput(String(partner.commissionRate ?? '0'));
+      setDiscountInput(String(Number(partner.discountRate ?? 0) * 100));
+      setCommissionInput(String(Number(partner.commissionRate ?? 0) * 100));
     }
   }, [partner.discountRate, partner.commissionRate, editing]);
 
@@ -611,14 +614,14 @@ function PromoCodeAndRatesPanel({
     Number.isFinite(cRate) &&
     dRate >= 0 &&
     cRate >= 0 &&
-    dRate <= 1 &&
-    cRate <= 1;
-  const sumExceeds = ratesValid && dRate + cRate > 1;
+    dRate <= 100 &&
+    cRate <= 100;
+  const sumExceeds = ratesValid && dRate + cRate > 100;
 
   const handleSave = async () => {
     setLocalError(null);
     if (!ratesValid) {
-      setLocalError('Проценты должны быть в диапазоне 0..1');
+      setLocalError('Проценты должны быть в диапазоне 0..100');
       return;
     }
     if (sumExceeds) {
@@ -627,7 +630,10 @@ function PromoCodeAndRatesPanel({
     }
     setSaving(true);
     try {
-      await onSaveRates({ discountRate: dRate, commissionRate: cRate });
+      await onSaveRates({
+        discountRate: dRate / 100,
+        commissionRate: cRate / 100,
+      });
       setEditing(false);
     } catch {
       // already surfaced via parent actionError
@@ -732,7 +738,7 @@ function PromoCodeAndRatesPanel({
           Сумма скидки и комиссии не должна превышать 100%.
           {ratesValid && (
             <span className="ml-1">
-              Сейчас: {((dRate + cRate) * 100).toFixed(1)}%
+              Сейчас: {(dRate + cRate).toFixed(1)}%
             </span>
           )}
         </div>
@@ -771,8 +777,8 @@ function PromoCodeAndRatesPanel({
               onClick={() => {
                 setEditing(false);
                 setLocalError(null);
-                setDiscountInput(String(partner.discountRate ?? '0'));
-                setCommissionInput(String(partner.commissionRate ?? '0'));
+                setDiscountInput(String(Number(partner.discountRate ?? 0) * 100));
+                setCommissionInput(String(Number(partner.commissionRate ?? 0) * 100));
               }}
               disabled={saving}
               className="px-4 py-2 rounded-xl text-sm font-medium"
@@ -848,9 +854,9 @@ function RateCell({
       {editing ? (
         <input
           type="number"
-          step="0.01"
+          step="0.5"
           min="0"
-          max="1"
+          max="100"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           className="w-full px-4 py-3 rounded-xl outline-none transition-all font-mono"
